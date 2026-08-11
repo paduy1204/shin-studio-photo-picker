@@ -36,13 +36,15 @@
   --font-mono: var(--font-geist-mono);
 }
 
+
+
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #2a2422; /* Tông đất cho dark mode */
-    --foreground: #f4ece8;
-    --card-bg: #352d2a;
-    --border: #4a403b;
-    --text-muted: #a69891;
+    --background: #2a2422 !important;
+    --foreground: #f4ece8 !important;
+    --card-bg: #352d2a !important;
+    --border: #4a403b !important;
+    --text-muted: #a69891 !important;
   }
 }
 

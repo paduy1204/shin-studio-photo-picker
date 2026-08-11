@@ -1,6 +1,6 @@
 .adminContainer {
   min-height: 100vh;
-  background-color: #f7f7f7; /* Nền nhạt giống mẫu Shotpik */
+  background-color: var(--background); /* Nền nhạt giống mẫu Shotpik */
   animation: fade-in 0.5s ease-out;
 }
 
@@ -44,10 +44,11 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background-color: #f0f0f0;
+  background-color: var(--background);
   padding: 0.5rem 1rem;
   border-radius: 20px;
   width: 250px;
+  border: 1px solid var(--border);
 }
 
 .searchBar input {
@@ -57,6 +58,7 @@
   width: 100%;
   font-size: 0.9rem;
   font-family: inherit;
+  color: var(--foreground);
 }
 
 .userInfo {
@@ -141,6 +143,35 @@
 .albumCard:hover {
   transform: translateY(-5px);
   box-shadow: var(--shadow-md);
+}
+
+.deleteBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+  border: none;
+}
+
+.albumCard:hover .deleteBtn {
+  opacity: 1;
+}
+
+.deleteBtn:hover {
+  background: #ef4444;
+  transform: scale(1.1);
 }
 
 .cardImage {
@@ -235,4 +266,283 @@
   .albumGrid {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   }
+}
+
+
+
+
+/* =========================================
+   MODAL T?O ALBUM
+   ========================================= */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  animation: fade-in 0.2s ease-out;
+}
+
+.modalContainer {
+  background-color: var(--card-bg);
+  width: 650px;
+  max-width: 95%;
+  max-height: 90vh;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slide-up 0.3s ease-out;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--card-bg);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.modalHeader h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ef4444; /* Ti�u �? m�u �? gi?ng Shotpik */
+  margin: 0;
+}
+
+.closeBtn {
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 0.5rem;
+}
+
+.closeBtn:hover {
+  color: #ef4444;
+}
+
+.modalBody {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.formGroup {
+  margin-bottom: 1.2rem;
+}
+
+.formGroup label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--foreground);
+  margin-bottom: 0.5rem;
+}
+
+.formGroup input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+
+.formGroup input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background-color: var(--card-bg);
+}
+
+.inputWithIcon {
+  display: flex;
+  align-items: stretch;
+}
+
+.inputWithIcon input {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: none;
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #10b981;
+  color: white;
+  padding: 0 1rem;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-weight: bold;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.domainInput {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.domainPrefix {
+  background-color: var(--background);
+  color: var(--text-muted);
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  border-right: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+}
+
+.domainInput input {
+  border: none;
+  border-radius: 0;
+}
+
+.noteBox {
+  background-color: var(--background);
+  border: 1px dashed var(--border);
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.toggleList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.toggleItemWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.toggleItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+.subInputGroup input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  animation: fade-in 0.3s ease-out;
+}
+
+.subInputGroup input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background-color: var(--card-bg);
+}
+
+.switch {
+  width: 44px;
+  height: 24px;
+  background-color: var(--border);
+  border-radius: 24px;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.switchOn {
+  background-color: var(--primary);
+}
+
+.switchHandle {
+  width: 18px;
+  height: 18px;
+  background-color: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  transition: transform 0.3s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.switchOn .switchHandle {
+  transform: translateX(20px);
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.2rem 1.5rem;
+  border-top: 1px solid var(--border);
+  background-color: var(--card-bg);
+  position: sticky;
+  bottom: 0;
+}
+
+.btnCancel {
+  padding: 10px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  color: var(--foreground);
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btnCancel:hover {
+  background-color: var(--background);
+}
+
+.btnSubmit {
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  background-color: #ef4444; /* N�t �? gi?ng Shotpik */
+  color: white;
+  font-weight: 600;
+  transition: background-color 0.2s;
+  min-width: 120px;
+}
+
+.btnSubmit:hover:not(:disabled) {
+  background-color: #dc2626;
+}
+
+.btnSubmit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@keyframes slide-up {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
 }

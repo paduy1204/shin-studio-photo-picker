@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
-import Image from 'next/image';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
 import styles from './page.module.css';
 
 // Dữ liệu mẫu (Mock data) để hiển thị giao diện
@@ -15,13 +16,50 @@ const MOCK_IMAGES = [
 ];
 
 export default function AlbumClientView() {
-  const [images, setImages] = useState(MOCK_IMAGES);
+  const params = useParams();
+  const id = params?.id as string;
+  const [images, setImages] = useState<any[]>([]);
+  const [albumName, setAlbumName] = useState('Đang tải...');
+  const [albumMeta, setAlbumMeta] = useState('');
   const [lightboxImg, setLightboxImg] = useState<any>(null);
   const [filterMode, setFilterMode] = useState<'all' | 'selected'>('all');
 
-  const handleHeartClick = (e: React.MouseEvent, id: string) => {
+  useEffect(() => {
+    const loadData = async () => {
+      if (!id) return;
+      const { data: album } = await supabase.from('albums').select('*').eq('id', id).single();
+      if (album) {
+        setAlbumName(album.name);
+        setAlbumMeta(`Khách hàng: ${album.client} - ${new Date(album.created_at).toLocaleDateString('vi-VN')}`);
+      }
+
+      const { data: files } = await supabase.from('images').select('*').eq('album_id', id).order('name', { ascending: true });
+      if (files && files.length > 0) {
+        const formatted = files.map(f => ({
+          id: f.id,
+          url: `/api/proxy-image?id=${f.id}`,
+          name: f.name,
+          liked: f.liked || false,
+          comment: f.comment || '',
+        }));
+        setImages(formatted);
+      } else {
+        setImages(MOCK_IMAGES);
+      }
+    };
+    loadData();
+  }, [id]);
+
+  const handleHeartClick = async (e: React.MouseEvent, imgId: string) => {
     e.stopPropagation();
-    setImages(images.map(img => img.id === id ? { ...img, liked: !img.liked } : img));
+    const index = images.findIndex(img => img.id === imgId);
+    if (index > -1) {
+      const newLikedState = !images[index].liked;
+      const updatedImages = [...images];
+      updatedImages[index].liked = newLikedState;
+      setImages(updatedImages);
+      await supabase.from('images').update({ liked: newLikedState }).eq('id', imgId);
+    }
   };
 
   const openLightbox = (img: any) => {
@@ -39,8 +77,8 @@ export default function AlbumClientView() {
     <div>
       {/* Header Album */}
       <header className={styles.albumHeader}>
-        <h1 className={styles.albumTitle}>Bé Su Tròn 1 Tuổi</h1>
-        <p className={styles.albumMeta}>Khách hàng: Chị Thảo - 10/08/2026</p>
+        <h1 className={styles.albumTitle}>{albumName}</h1>
+        <p className={styles.albumMeta}>{albumMeta}</p>
         
         <div className={styles.statsBar}>
           <button 
