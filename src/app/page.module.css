@@ -9,15 +9,71 @@
   background: radial-gradient(circle at center, var(--card-bg) 0%, var(--background) 100%);
 }
 
-.logo {
-  font-size: 3rem;
-  font-weight: 300;
-  letter-spacing: 0.1em;
-  margin-bottom: 1rem;
-  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.logoContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2rem;
   animation: fade-in-up 0.8s ease-out;
+}
+
+.logoImage {
+  border-radius: 50%;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow-sm);
+  background-color: var(--card-bg);
+  padding: 10px;
+}
+
+.logoText {
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--primary);
+  line-height: 1.2;
+}
+
+.slogan {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+  letter-spacing: 0.02em;
+}
+
+.footer {
+  margin-top: 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  animation: fade-in-up 1.4s ease-out;
+  padding: 2rem;
+  background-color: var(--card-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  max-width: 600px;
+  width: 100%;
+}
+
+.contactItem {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  color: var(--foreground);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.contactItem svg {
+  width: 20px;
+  height: 20px;
+  color: var(--primary);
+}
+
+.contactItem a:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
 }
 
 .subtitle {

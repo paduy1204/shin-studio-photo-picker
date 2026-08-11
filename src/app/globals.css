@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fafafa;
-  --foreground: #111111;
-  --primary: #c29b62; /* Màu vàng đồng sang trọng */
-  --primary-hover: #b08953;
+  --background: #fdfbf7; /* Trắng kem ấm áp */
+  --foreground: #5c4d47; /* Nâu nhạt dịu mắt */
+  --primary: #d4a39c; /* Hồng đào pastel dịu nhẹ */
+  --primary-hover: #c48c84;
   --card-bg: #ffffff;
-  --border: #eaeaea;
-  --text-muted: #666666;
-  --heart: #ff3b30;
+  --border: #f0e9e4;
+  --text-muted: #8c7e77;
+  --heart: #ff6b6b;
   
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 30px;
   
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
-  --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+  --shadow-sm: 0 4px 12px rgba(92, 77, 71, 0.03);
+  --shadow-md: 0 10px 30px rgba(92, 77, 71, 0.08);
 }
 
 @theme inline {
@@ -38,11 +38,11 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #111111;
-    --foreground: #f5f5f7;
-    --card-bg: #1a1a1a;
-    --border: #333333;
-    --text-muted: #a1a1a6;
+    --background: #2a2422; /* Tông đất cho dark mode */
+    --foreground: #f4ece8;
+    --card-bg: #352d2a;
+    --border: #4a403b;
+    --text-muted: #a69891;
   }
 }
 
@@ -55,10 +55,9 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1.5;
+  line-height: 1.6;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
