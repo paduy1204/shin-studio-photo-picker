@@ -17,9 +17,10 @@ const MOCK_IMAGES = [
 export default function AlbumClientView() {
   const [images, setImages] = useState(MOCK_IMAGES);
   const [lightboxImg, setLightboxImg] = useState<any>(null);
+  const [filterMode, setFilterMode] = useState<'all' | 'selected'>('all');
 
   const handleHeartClick = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation(); // Ngăn không cho mở lightbox khi bấm tim
+    e.stopPropagation();
     setImages(images.map(img => img.id === id ? { ...img, liked: !img.liked } : img));
   };
 
@@ -32,6 +33,7 @@ export default function AlbumClientView() {
   };
 
   const selectedCount = images.filter(img => img.liked).length;
+  const displayImages = filterMode === 'all' ? images : images.filter(img => img.liked);
 
   return (
     <div>
@@ -41,24 +43,46 @@ export default function AlbumClientView() {
         <p className={styles.albumMeta}>Khách hàng: Chị Thảo - 10/08/2026</p>
         
         <div className={styles.statsBar}>
-          <div className={styles.statItem}>
+          <button 
+            className={`${styles.statItem} ${filterMode === 'all' ? styles.activeTab : ''}`}
+            onClick={() => setFilterMode('all')}
+          >
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-            <span>{images.length} Ảnh</span>
-          </div>
-          <div className={styles.statItem}>
+            <span>Tất cả ({images.length})</span>
+          </button>
+          
+          <button 
+            className={`${styles.statItem} ${filterMode === 'selected' ? styles.activeTab : ''}`}
+            onClick={() => setFilterMode('selected')}
+          >
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-            <span>{selectedCount} Đã chọn</span>
-          </div>
+            <span>Đã chọn ({selectedCount})</span>
+          </button>
+        </div>
+
+        <div className={styles.headerActions}>
+          <button 
+            className={styles.downloadAllBtn} 
+            onClick={() => alert("Chức năng tải toàn bộ album đang được giả lập. Ở bản thật sẽ nén file từ Google Drive và tải xuống.")}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Tải toàn bộ Album
+          </button>
         </div>
       </header>
 
       {/* Lưới Ảnh Masonry */}
       <main className={styles.masonryGrid}>
-        {images.map((img) => (
-          <div key={img.id} className={styles.masonryItem} onClick={() => openLightbox(img)}>
-            <img src={img.url} alt={img.name} loading="lazy" />
-            
-            <div className={styles.imageOverlay}>
+        {displayImages.length === 0 ? (
+          <div style={{textAlign: 'center', gridColumn: '1 / -1', padding: '3rem', color: 'var(--text-muted)'}}>
+            Chưa có bức ảnh nào được chọn.
+          </div>
+        ) : (
+          displayImages.map((img) => (
+            <div key={img.id} className={styles.masonryItem} onClick={() => openLightbox(img)}>
+              <img src={img.url} alt={img.name} loading="lazy" />
+              
+              <div className={styles.imageOverlay}>
               <div className={styles.topActions}>
                 <button 
                   className={`${styles.heartBtn} ${img.liked ? styles.active : ''}`}
@@ -68,15 +92,20 @@ export default function AlbumClientView() {
                 </button>
               </div>
               <div className={styles.bottomInfo}>
-                <span>{img.name}</span>
-                <button className={styles.commentBtn}>
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                  Bình luận
-                </button>
+                <span className={styles.imageName}>{img.name}</span>
+                <div className={styles.bottomActions}>
+                  <button className={styles.iconBtn} title="Tải xuống" onClick={(e) => { e.stopPropagation(); window.open(img.url, '_blank'); }}>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  </button>
+                  <button className={styles.iconBtn} title="Bình luận" onClick={(e) => { e.stopPropagation(); alert('Tính năng bình luận đang phát triển'); }}>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        ))}
+        ))
+        )}
       </main>
 
       {/* Lightbox */}
@@ -91,7 +120,36 @@ export default function AlbumClientView() {
             </button>
           </div>
           <div className={styles.lightboxContent} onClick={closeLightbox}>
-            <img src={lightboxImg.url} alt={lightboxImg.name} className={styles.lightboxImage} onClick={(e) => e.stopPropagation()} />
+            <div className={styles.lightboxImageWrapper} onClick={(e) => e.stopPropagation()}>
+              <img src={lightboxImg.url} alt={lightboxImg.name} className={styles.lightboxImage} />
+            </div>
+            <div className={styles.lightboxActions} onClick={(e) => e.stopPropagation()}>
+              <button 
+                className={`${styles.lightboxHeart} ${images.find(img => img.id === lightboxImg.id)?.liked ? styles.active : ''}`}
+                onClick={(e) => {
+                  handleHeartClick(e, lightboxImg.id);
+                  // Cập nhật lại lightboxImg state cục bộ nếu cần, 
+                  // nhưng vì ta lấy state trực tiếp từ mảng images thông qua id nên nút sẽ tự update.
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="24" height="24" fill={images.find(img => img.id === lightboxImg.id)?.liked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                {images.find(img => img.id === lightboxImg.id)?.liked ? "Đã chọn" : "Chọn ảnh này"}
+              </button>
+              
+              <div style={{ width: '1px', backgroundColor: 'rgba(255,255,255,0.3)', margin: '0 0.5rem' }}></div>
+              
+              <button onClick={() => window.open(lightboxImg.url, '_blank')}>
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Tải xuống
+              </button>
+              
+              <div style={{ width: '1px', backgroundColor: 'rgba(255,255,255,0.3)', margin: '0 0.5rem' }}></div>
+              
+              <button>
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                Viết bình luận
+              </button>
+            </div>
           </div>
         </div>
       )}
