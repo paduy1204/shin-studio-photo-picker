@@ -27,7 +27,10 @@ export default function AlbumClientView() {
   const id = params?.id as string;
   const [images, setImages] = useState<any[]>([]);
   const [albumName, setAlbumName] = useState('Đang tải...');
+  const [albumClient, setAlbumClient] = useState('');
   const [albumMeta, setAlbumMeta] = useState('');
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
+  const [showWelcome, setShowWelcome] = useState(true);
   const [lightboxImg, setLightboxImg] = useState<any>(null);
   const [filterMode, setFilterMode] = useState<'all' | 'selected'>('all');
   const [showAppBrowserWarning, setShowAppBrowserWarning] = useState(false);
@@ -43,7 +46,9 @@ export default function AlbumClientView() {
       const { data: album } = await supabase.from('albums').select('*').eq('id', id).single();
       if (album) {
         setAlbumName(album.name);
+        setAlbumClient(album.client || '');
         setAlbumMeta(`Khách hàng: ${album.client} - ${new Date(album.created_at).toLocaleDateString('vi-VN')}`);
+        if (album.cover_image_url) setCoverImageUrl(album.cover_image_url);
       }
 
       const { data: files } = await supabase.from('images').select('*').eq('album_id', id).order('name', { ascending: true });
@@ -58,6 +63,17 @@ export default function AlbumClientView() {
           comment: f.comment || '',
         }));
         setImages(formatted);
+        // Nếu album chưa có cover, dùng ảnh đầu tiên
+        if (!album?.cover_image_url) {
+          const first = files[0];
+          if (first?.thumbnail_link) {
+            setCoverImageUrl(first.thumbnail_link);
+          } else if (first?.drive_file_id) {
+            setCoverImageUrl(`https://drive.google.com/thumbnail?id=${first.drive_file_id}&sz=w800`);
+          } else {
+            setCoverImageUrl(`/api/proxy-image?id=${first.id}`);
+          }
+        }
       } else {
         setImages(MOCK_IMAGES);
       }
@@ -158,9 +174,76 @@ export default function AlbumClientView() {
         </div>
       )}
 
+      {/* ===== TRANG CHÀO MỪNG (WELCOME SPLASH) ===== */}
+      {showWelcome && (
+        <div className={styles.welcomeOverlay}>
+          {/* Ảnh bìa nền blur */}
+          {coverImageUrl && (
+            <div
+              className={styles.welcomeBg}
+              style={{ backgroundImage: `url(${coverImageUrl})` }}
+            />
+          )}
+          <div className={styles.welcomeContent}>
+            {/* Logo / Brand */}
+            <div className={styles.welcomeBrand}>
+              <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/></svg>
+              <span>Shin Studio</span>
+            </div>
+
+            {/* Ảnh cover */}
+            {coverImageUrl && (
+              <div className={styles.welcomeImageWrapper}>
+                <img src={coverImageUrl} alt={albumName} className={styles.welcomeImage} />
+              </div>
+            )}
+
+            {/* Tên album và khách */}
+            <h1 className={styles.welcomeTitle}>{albumName}</h1>
+            {albumClient && (
+              <p className={styles.welcomeClient}>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                {albumClient}
+              </p>
+            )}
+            <p className={styles.welcomeSub}>{images.length > 0 ? `${images.length} bức ảnh đang chờ bạn` : 'Đang tải album...'}</p>
+
+            {/* Nút vào xem */}
+            <button
+              className={styles.welcomeBtn}
+              onClick={() => setShowWelcome(false)}
+              disabled={images.length === 0}
+            >
+              {images.length === 0 ? (
+                <><span className={styles.spinnerSmall} /> Đang tải...</>
+              ) : (
+                <>
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  Xem ảnh của tôi
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ===== NỘI DUNG ALBUM (ẩn khi đang ở welcome) ===== */}
+      <div style={{ display: showWelcome ? 'none' : 'block' }}>
+
+      {/* Hero cover ảnh bìa */}
+      {coverImageUrl && (
+        <div className={styles.heroCover}>
+          <img src={coverImageUrl} alt={albumName} className={styles.heroCoverImg} />
+          <div className={styles.heroCoverOverlay}>
+            <h1 className={styles.heroCoverTitle}>{albumName}</h1>
+            {albumClient && <p className={styles.heroCoverClient}>{albumClient}</p>}
+          </div>
+        </div>
+      )}
+
       {/* Header Album */}
       <header className={styles.albumHeader}>
-        <h1 className={styles.albumTitle}>{albumName}</h1>
+        {!coverImageUrl && <h1 className={styles.albumTitle}>{albumName}</h1>}
         <p className={styles.albumMeta}>{albumMeta}</p>
         
         <div className={styles.statsBar}>
@@ -306,6 +389,7 @@ export default function AlbumClientView() {
           </div>
         </div>
       )}
+      </div> {/* end album content wrapper */}
     </div>
   );
 }
