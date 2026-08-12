@@ -39,6 +39,15 @@ export default function ConceptsPage() {
 
       if (conceptAlbum) {
         setAlbumTitle(conceptAlbum.name);
+
+        let hiddenList: string[] = [];
+        if (conceptAlbum.tags) {
+          try {
+            const parsed = JSON.parse(conceptAlbum.tags);
+            if (Array.isArray(parsed)) hiddenList = parsed;
+          } catch {}
+        }
+
         const { data: files } = await supabase
           .from('images')
           .select('*')
@@ -59,10 +68,13 @@ export default function ConceptsPage() {
               tag: tag,
             };
           });
-          setImages(formatted);
+
+          // Lọc bỏ tất cả các nhãn (Tag) đã bị Admin bấm ẨN
+          const visibleFormatted = formatted.filter(img => !hiddenList.includes(img.tag));
+          setImages(visibleFormatted);
 
           const extractedTags = Array.from(
-            new Set(formatted.map(img => img.tag).filter(t => t && t.trim() !== ''))
+            new Set(visibleFormatted.map(img => img.tag).filter(t => t && t.trim() !== ''))
           );
           setAvailableTags(['Tất cả', ...extractedTags]);
         }

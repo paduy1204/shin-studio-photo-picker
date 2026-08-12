@@ -47,7 +47,7 @@ async function scanFolderRecursive(drive: any, currentFolderId: string, currentT
     if (subfoldersRes.data.files && subfoldersRes.data.files.length > 0) {
       for (const subfolder of subfoldersRes.data.files) {
         const subfolderName = subfolder.name ? subfolder.name.trim() : '';
-        const nextTagName = currentTagName ? currentTagName : subfolderName;
+        const nextTagName = subfolderName || currentTagName;
         await scanFolderRecursive(drive, subfolder.id, nextTagName, allFiles, depth + 1);
       }
     }

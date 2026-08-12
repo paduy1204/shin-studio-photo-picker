@@ -12,6 +12,7 @@ export default function ConceptManagementPage() {
   const router = useRouter();
   const [images, setImages] = useState<any[]>([]);
   const [tagsList, setTagsList] = useState<string[]>([]);
+  const [hiddenTags, setHiddenTags] = useState<string[]>([]);
   const [driveLinkInput, setDriveLinkInput] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -32,6 +33,25 @@ export default function ConceptManagementPage() {
       setLoading(true);
       const conceptAlbumId = 'master-concept';
 
+      // 1. Tải danh sách nhãn bị ẩn
+      const { data: album } = await supabase
+        .from('albums')
+        .select('*')
+        .eq('id', conceptAlbumId)
+        .maybeSingle();
+
+      if (album && album.tags) {
+        try {
+          const parsed = JSON.parse(album.tags);
+          if (Array.isArray(parsed)) {
+            setHiddenTags(parsed);
+          }
+        } catch {
+          // Ignore if tags is string
+        }
+      }
+
+      // 2. Tải danh sách ảnh concept
       const { data: files } = await supabase
         .from('images')
         .select('*')
@@ -56,6 +76,31 @@ export default function ConceptManagementPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleToggleTagVisibility = async (tag: string) => {
+    let newHidden = [...hiddenTags];
+    if (newHidden.includes(tag)) {
+      newHidden = newHidden.filter(t => t !== tag);
+    } else {
+      newHidden.push(tag);
+    }
+    setHiddenTags(newHidden);
+
+    const conceptAlbumId = 'master-concept';
+    await supabase.from('albums').upsert({
+      id: conceptAlbumId,
+      name: 'MẪU CONCEPT SHIN STUDIO',
+      client: 'Shin Studio Concept Showcase',
+      slug: 'concepts',
+      tags: JSON.stringify(newHidden)
+    });
+  };
+
+  const handleCopyMasterLink = () => {
+    const url = 'https://shin-studio-photo-picker.vercel.app/concepts';
+    navigator.clipboard.writeText(url);
+    alert('📋 Đã sao chép Master Link thành công!\n\nLink: ' + url + '\n\nBạn có thể dán (Paste) để gửi ngay cho khách hàng xem.');
   };
 
   const handleSyncSubmit = async (e: React.FormEvent) => {
@@ -91,7 +136,7 @@ export default function ConceptManagementPage() {
         name: 'MẪU CONCEPT SHIN STUDIO',
         client: 'Shin Studio Concept Showcase',
         slug: 'concepts',
-        tags: 'Concept Mẫu Studio',
+        tags: JSON.stringify(hiddenTags),
         allow_comments: true,
         watermark: false,
         show_name_card: true,
@@ -145,12 +190,15 @@ export default function ConceptManagementPage() {
             <Image src="/logo.png" alt="Logo" width={40} height={40} className={styles.navLogo} />
           </Link>
           <div className={styles.navTitle}>
-            <span>QUẢN LÝ ALBUM CONCEPT MẪU (/concepts/management)</span>
+            <span>QUẢN LÝ ALBUM CONCEPT MẪU</span>
           </div>
         </div>
         <div className={styles.navRight}>
+          <button onClick={handleCopyMasterLink} className={styles.btnMasterLink} style={{ background: 'var(--primary)', color: 'white', cursor: 'pointer' }}>
+            📋 Sao Chép Master Link Gửi Khách
+          </button>
           <Link href="/concepts" target="_blank" className={styles.btnMasterLink}>
-            👁️ Xem Trang Master Link Khách Xem (/concepts)
+            👁️ Xem Trước Trang Khách (/concepts)
           </Link>
         </div>
       </nav>
@@ -161,7 +209,7 @@ export default function ConceptManagementPage() {
             <div>
               <h2 className={styles.cardTitle}>Album Concept Mẫu Độc Quyền (Shin Studio)</h2>
               <p className={styles.cardSub}>
-                Tính năng quản lý ảnh mẫu bối cảnh tư vấn cho khách. Hoàn toàn tách biệt và bảo mật với các Album trả ảnh cho khách hàng.
+                Bấm vào biểu tượng mắt 👁️/🙈 bên dưới từng danh mục để **Ẩn/Hiện thủ công** mục concept không muốn cho khách thấy.
               </p>
             </div>
             <button className={styles.btnPrimary} onClick={() => setIsModalOpen(true)}>
@@ -175,8 +223,8 @@ export default function ConceptManagementPage() {
               <span className={styles.statLabel}>Tổng số ảnh mẫu</span>
             </div>
             <div className={styles.statBox}>
-              <span className={styles.statNumber}>{loading ? '...' : tagsList.length}</span>
-              <span className={styles.statLabel}>Số danh mục Concept</span>
+              <span className={styles.statNumber}>{loading ? '...' : tagsList.filter(t => !hiddenTags.includes(t)).length}</span>
+              <span className={styles.statLabel}>Số danh mục Đang Hiện</span>
             </div>
             <div className={styles.statBox}>
               <span className={styles.statNumber} style={{ fontSize: '1rem', color: '#10b981' }}>Đang Hoạt Động</span>
@@ -186,13 +234,36 @@ export default function ConceptManagementPage() {
 
           {tagsList.length > 0 && (
             <div className={styles.tagsContainer}>
-              <span className={styles.tagsTitle}>Các mục Concept đang hiển thị:</span>
+              <span className={styles.tagsTitle}>Quản lý Ẩn/Hiện Danh Mục Concept (Bấm để đổi trạng thái):</span>
               <div className={styles.tagPills}>
-                {tagsList.map(tag => (
-                  <span key={tag} className={styles.tagBadge}>
-                    📁 {tag} ({images.filter(img => img.tag === tag).length} ảnh)
-                  </span>
-                ))}
+                {tagsList.map(tag => {
+                  const isHidden = hiddenTags.includes(tag);
+                  const count = images.filter(img => img.tag === tag).length;
+                  return (
+                    <button
+                      key={tag}
+                      onClick={() => handleToggleTagVisibility(tag)}
+                      className={styles.tagBadge}
+                      style={{
+                        background: isHidden ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                        borderColor: isHidden ? 'rgba(239, 68, 68, 0.4)' : 'rgba(16, 185, 129, 0.4)',
+                        color: isHidden ? '#ef4444' : '#10b981',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.4rem'
+                      }}
+                    >
+                      <span>{isHidden ? '🙈' : '👁️'}</span>
+                      <span style={{ textDecoration: isHidden ? 'line-through' : 'none' }}>
+                        📁 {tag} ({count} ảnh)
+                      </span>
+                      <small style={{ fontSize: '0.75rem', opacity: 0.8 }}>
+                        ({isHidden ? 'Đã Ẩn' : 'Đang Hiện'})
+                      </small>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -203,7 +274,7 @@ export default function ConceptManagementPage() {
           <ol className={styles.guideList}>
             <li>Mở thư mục Google Drive của Studio chứa các ảnh mẫu.</li>
             <li><strong>Thêm mục mới (ví dụ: NOEL VÀ TẾT):</strong> Tạo thư mục con tên <code>NOEL VÀ TẾT</code> và thả ảnh vào.</li>
-            <li><strong>Xóa mục cũ (ví dụ không chụp SƠ SINH nữa):</strong> Đổi tên hoặc xóa thư mục <code>SƠ SINH</code> trên Drive.</li>
+            <li><strong>Ẩn mục không muốn cho khách xem:</strong> Bấm vào nút 👁️ của danh mục đó ở trên để đổi sang 🙈 <strong>Đã Ẩn</strong>!</li>
             <li>Sau khi chỉnh sửa trên Drive, bấm nút <strong>"⚙️ Cập Nhật / Đổi Link Drive Concept"</strong> ở trên để đồng bộ lại web!</li>
           </ol>
         </div>
