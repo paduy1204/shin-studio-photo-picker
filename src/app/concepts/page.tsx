@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import Masonry from 'react-masonry-css';
 import { supabase } from '@/lib/supabaseClient';
 import { getCurrentUser, UserAccount } from '@/lib/auth';
@@ -208,10 +209,10 @@ export default function ConceptsPage() {
             <span>Shin Studio</span>
           </div>
 
-          {/* CHỈ HIỂN THỊ NÚT QUẢN LÝ CHO NHÂN VIÊN/ADMIN ĐÃ ĐĂNG NHẬP */}
+          {/* CHỈ HIỂN THỊ NÚT TRANG QUẢN TRỊ CHO NHÂN VIÊN/ADMIN ĐÃ ĐĂNG NHẬP */}
           {currentUser && (
-            <button 
-              onClick={() => setIsModalOpen(true)}
+            <Link 
+              href="/concepts/management"
               style={{
                 background: 'var(--primary)',
                 color: 'white',
@@ -222,11 +223,12 @@ export default function ConceptsPage() {
                 fontWeight: 700,
                 cursor: 'pointer',
                 marginBottom: '1rem',
+                textDecoration: 'none',
                 boxShadow: '0 4px 12px rgba(232, 93, 117, 0.4)'
               }}
             >
-              ⚙️ Cập Nhật Link Drive Concept ({currentUser.name})
-            </button>
+              ⚙️ Trang Quản Trị Concept Mẫu ({currentUser.name})
+            </Link>
           )}
         </div>
 
