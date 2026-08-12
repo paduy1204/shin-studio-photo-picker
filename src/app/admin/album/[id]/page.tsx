@@ -268,7 +268,13 @@ export default function AdminAlbumDetail() {
 
   
   const handleSetCoverImage = async (img: any) => {
-    const coverUrl = img.thumbnailLink || img.webContentLink || img.url;
+    let coverUrl = img.thumbnailLink ? img.thumbnailLink.replace(/=s\d+/, '=w1200') : null;
+    if (!coverUrl && img.id) {
+      coverUrl = `https://drive.google.com/thumbnail?id=${img.id}&sz=w1200`;
+    }
+    if (!coverUrl) {
+      coverUrl = img.webContentLink || img.url;
+    }
     const { error } = await supabase.from('albums').update({ cover_image_url: coverUrl }).eq('id', id);
     if (error) {
       if (error.message.includes("cover_image_url")) {

@@ -1,38 +1,54 @@
 import { Metadata } from 'next';
 import { supabase } from '@/lib/supabaseClient';
 
-// Hàm này chạy trên server -> generate OG tags động cho từng album
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const albumId = params?.id;
+  if (!albumId) {
+    return {
+      title: 'Shin Studio | Photo Picker',
+      description: 'Hệ thống chọn ảnh chất lượng cao dành cho khách hàng của Shin Studio.',
+    };
+  }
+
   try {
+    // 1. Lấy thông tin Album
     const { data: album } = await supabase
       .from('albums')
-      .select('name, client, created_at, cover_image_url')
-      .eq('id', params.id)
-      .single();
+      .select('name, client, cover_image_url')
+      .eq('id', albumId)
+      .maybeSingle();
 
-    // Lấy ảnh đầu tiên trong album làm cover nếu chưa có cover riêng
-    let coverUrl = album?.cover_image_url;
+    const title = album?.name ? album.name : 'Album ảnh Shin Studio';
+    const clientName = album?.client || '';
+    const description = clientName
+      ? `${clientName} | Bộ ảnh chất lượng cao tại Shin Studio`
+      : 'Bộ ảnh chất lượng cao tại Shin Studio. Xem và chọn ảnh yêu thích.';
+
+    // 2. Xác định Cover URL
+    let coverUrl: string | null = album?.cover_image_url || null;
+
     if (!coverUrl) {
       const { data: firstImg } = await supabase
         .from('images')
-        .select('thumbnail_link, drive_file_id')
-        .eq('album_id', params.id)
+        .select('id, thumbnail_link')
+        .eq('album_id', albumId)
         .order('name', { ascending: true })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (firstImg?.thumbnail_link) {
-        coverUrl = firstImg.thumbnail_link;
-      } else if (firstImg?.drive_file_id) {
-        // Dùng Google Drive thumbnail
-        coverUrl = `https://drive.google.com/thumbnail?id=${firstImg.drive_file_id}&sz=w1200`;
+      if (firstImg) {
+        if (firstImg.thumbnail_link) {
+          coverUrl = firstImg.thumbnail_link.replace(/=s\d+/, '=w1200');
+        } else if (firstImg.id) {
+          coverUrl = `https://drive.google.com/thumbnail?id=${firstImg.id}&sz=w1200`;
+        }
       }
     }
 
-    const title = album?.name || 'Album ảnh Shin Studio';
-    const description = album?.client
-      ? `Bộ ảnh của ${album.client} tại Shin Studio. Xem và chọn ảnh yêu thích của bạn.`
-      : 'Xem và chọn ảnh yêu thích của bạn tại Shin Studio.';
+    // Biến đổi coverUrl thành absolute URL chuẩn cho OpenGraph
+    if (coverUrl && coverUrl.startsWith('/')) {
+      coverUrl = `https://shin-studio-photo-picker.vercel.app${coverUrl}`;
+    }
 
     return {
       title,
@@ -41,8 +57,16 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
         title,
         description,
         type: 'website',
+        siteName: 'Shin Studio',
         images: coverUrl
-          ? [{ url: coverUrl, width: 1200, height: 630, alt: title }]
+          ? [
+              {
+                url: coverUrl,
+                width: 1200,
+                height: 630,
+                alt: title,
+              },
+            ]
           : [],
       },
       twitter: {
@@ -52,7 +76,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
         images: coverUrl ? [coverUrl] : [],
       },
     };
-  } catch {
+  } catch (err) {
+    console.error('generateMetadata error:', err);
     return {
       title: 'Shin Studio | Photo Picker',
       description: 'Hệ thống chọn ảnh chất lượng cao dành cho khách hàng của Shin Studio.',
