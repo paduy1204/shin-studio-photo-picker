@@ -39,8 +39,13 @@ export default function ConceptManagementPage() {
         .order('name', { ascending: true });
 
       if (files && files.length > 0) {
-        setImages(files);
-        const tags = Array.from(new Set(files.map((f: any) => f.tag).filter((t: any) => t && t.trim() !== '')));
+        const formatted = files.map((f: any) => {
+          const match = f.name.match(/^\[(.*?)\]/);
+          const tag = match ? match[1] : '';
+          return { ...f, tag };
+        });
+        setImages(formatted);
+        const tags = Array.from(new Set(formatted.map((f: any) => f.tag).filter((t: any) => t && t.trim() !== '')));
         setTagsList(tags as string[]);
       } else {
         setImages([]);
@@ -100,20 +105,24 @@ export default function ConceptManagementPage() {
       if (data.files && data.files.length > 0) {
         await supabase.from('images').delete().eq('album_id', conceptAlbumId);
 
-        const imageInserts = data.files.map((file: any) => ({
-          id: file.id,
-          album_id: conceptAlbumId,
-          name: file.name,
-          tag: file.tag || '',
-          url: file.webContentLink || '',
-          thumbnail_link: file.thumbnailLink,
-          web_content_link: file.webContentLink
-        }));
+        const imageInserts = data.files.map((file: any) => {
+          const tag = file.tag || '';
+          const nameWithTag = tag ? `[${tag}] ${file.name}` : file.name;
+          return {
+            id: file.id,
+            album_id: conceptAlbumId,
+            name: nameWithTag,
+            url: file.webContentLink || '',
+            thumbnail_link: file.thumbnailLink,
+            web_content_link: file.webContentLink
+          };
+        });
 
         const chunkSize = 500;
         for (let i = 0; i < imageInserts.length; i += chunkSize) {
           const chunk = imageInserts.slice(i, i + chunkSize);
-          await supabase.from('images').upsert(chunk);
+          const { error: insertErr } = await supabase.from('images').upsert(chunk);
+          if (insertErr) console.error('Error inserting chunk:', insertErr);
         }
       }
 
