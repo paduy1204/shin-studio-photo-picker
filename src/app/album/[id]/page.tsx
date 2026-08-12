@@ -76,17 +76,44 @@ export default function AlbumClientView() {
     }
   };
 
-  const handleDownload = (img: any) => {
-    const downloadUrl = getDriveDownloadUrl(img.driveFileId, img.webContentLink);
-    if (downloadUrl) {
-      // Mở trực tiếp link Google Drive -> iOS/Android sẽ hiện menu lưu ảnh
-      window.open(downloadUrl, '_blank');
-    } else {
-      // Fallback: tạo link download qua proxy với tên file gốc
+  const handleDownload = async (img: any) => {
+    try {
+      // Bước 1: Tải ảnh về dưới dạng blob qua proxy (tránh CORS)
+      const response = await fetch(img.url);
+      if (!response.ok) throw new Error('Fetch failed');
+      const blob = await response.blob();
+
+      // Xác định extension và MIME type
+      const ext = img.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const mimeType = blob.type || (ext === 'png' ? 'image/png' : 'image/jpeg');
+      const file = new File([blob], img.name, { type: mimeType });
+
+      // Bước 2: Dùng Web Share API (iOS Safari hỗ trợ) -> hiện "Lưu hình ảnh"
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: img.name,
+        });
+        return;
+      }
+
+      // Fallback cho các trình duyệt không hỗ trợ Web Share API
+      const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = img.url;
+      a.href = blobUrl;
       a.download = img.name;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+    } catch (err: any) {
+      // Nếu user cancel share hoặc lỗi khác -> fallback mở link drive
+      if (err?.name !== 'AbortError') {
+        const downloadUrl = getDriveDownloadUrl(img.driveFileId, img.webContentLink);
+        if (downloadUrl) {
+          window.open(downloadUrl, '_blank');
+        }
+      }
     }
   };
 
