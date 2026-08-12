@@ -13,46 +13,40 @@ export async function generateMetadata({ params }: { params: { id: string } | Pr
   }
 
   try {
-    // 1. Lấy thông tin Album
-    const { data: album, error: albumError } = await supabase
+    const { data: album } = await supabase
       .from('albums')
       .select('name, client, cover_image_url')
       .eq('id', albumId)
       .maybeSingle();
 
-    if (albumError) {
-      console.error('Supabase album query error:', albumError);
-    }
-
     const albumName = album?.name || 'Album ảnh';
     const clientName = album?.client || '';
     const title = albumName;
-    const description = clientName
-      ? `${clientName} - ${albumName} tại Shin Studio`
-      : `${albumName} tại Shin Studio. Xem và chọn ảnh yêu thích.`;
+    const description = clientName && clientName !== albumName
+      ? `${clientName} | Bộ ảnh chất lượng cao tại Shin Studio`
+      : `${albumName} | Bộ ảnh chất lượng cao tại Shin Studio`;
 
-    // 2. Xác định Cover URL
     let coverUrl: string | null = album?.cover_image_url || null;
+
+    // Loại bỏ link drive-storage riêng tư nếu có
+    if (coverUrl && (coverUrl.includes('drive-storage') || coverUrl.includes('lh3.googleusercontent.com'))) {
+      coverUrl = null;
+    }
 
     if (!coverUrl) {
       const { data: firstImg } = await supabase
         .from('images')
-        .select('id, thumbnail_link')
+        .select('id')
         .eq('album_id', albumId)
         .order('name', { ascending: true })
         .limit(1)
         .maybeSingle();
 
-      if (firstImg) {
-        if (firstImg.thumbnail_link) {
-          coverUrl = firstImg.thumbnail_link.replace(/=s\d+/, '=w1200');
-        } else if (firstImg.id) {
-          coverUrl = `https://drive.google.com/thumbnail?id=${firstImg.id}&sz=w1200`;
-        }
+      if (firstImg?.id) {
+        coverUrl = `https://drive.google.com/thumbnail?id=${firstImg.id}&sz=w1200`;
       }
     }
 
-    // Biến đổi coverUrl thành absolute URL chuẩn cho OpenGraph
     if (coverUrl && coverUrl.startsWith('/')) {
       coverUrl = `https://shin-studio-photo-picker.vercel.app${coverUrl}`;
     }
