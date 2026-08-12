@@ -26,8 +26,11 @@ export default function ConceptsPage() {
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        const formatted = data.map((album) => {
+      // Chỉ hiển thị các Album được Admin gán Tag Concept Mẫu (bỏ qua album khách hàng thông thường)
+      const conceptAlbumsOnly = (data || []).filter(album => album.tags && album.tags.trim() !== '');
+
+      if (conceptAlbumsOnly.length > 0) {
+        const formatted = conceptAlbumsOnly.map((album) => {
           let cover = album.cover_image_url;
           if (!cover || cover.includes('drive-storage') || cover.includes('lh3.googleusercontent.com')) {
             if (album.images && album.images.length > 0) {
@@ -37,18 +40,7 @@ export default function ConceptsPage() {
             }
           }
 
-          // Xác định category tag từ album.tags hoặc tên/khách hàng
-          let categoryTag = album.tags?.trim() || 'Cho Bé';
-          if (!categoryTag || categoryTag === '') {
-            const nameLower = (album.name + ' ' + (album.client || '')).toLowerCase();
-            if (nameLower.includes('bé') || nameLower.includes('baby') || nameLower.includes('sinh nhật')) categoryTag = 'Cho Bé';
-            else if (nameLower.includes('gia đình') || nameLower.includes('family')) categoryTag = 'Gia đình';
-            else if (nameLower.includes('sơ sinh') || nameLower.includes('newborn')) categoryTag = 'Sơ sinh';
-            else if (nameLower.includes('bầu') || nameLower.includes('mới sinh')) categoryTag = 'Bầu';
-            else if (nameLower.includes('beauty') || nameLower.includes('cá nhân')) categoryTag = 'Beauty';
-            else if (nameLower.includes('couple') || nameLower.includes('cặp đôi')) categoryTag = 'Couple';
-            else if (nameLower.includes('profile') || nameLower.includes('doanh nhân')) categoryTag = 'Profile';
-          }
+          const categoryTag = album.tags.trim();
 
           return {
             ...album,
