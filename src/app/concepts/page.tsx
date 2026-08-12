@@ -58,17 +58,11 @@ export default function ConceptsPage() {
           }));
           setImages(formatted);
 
-          // Trích xuất các tag/thư mục con độc nhất (như BEAUTY, BẦU, COUPLE, PROFILE, CHO BÉ...)
           const extractedTags = Array.from(
             new Set(formatted.map(img => img.tag).filter(t => t && t.trim() !== ''))
           );
 
-          if (extractedTags.length > 0) {
-            setAvailableTags(['Tất cả', ...extractedTags]);
-          } else {
-            // Mặc định các danh mục phổ biến nếu chưa phân loại trong Drive
-            setAvailableTags(['Tất cả', 'Cho Bé', 'Gia đình', 'Sơ sinh', 'Bầu', 'Beauty', 'Couple', 'Profile']);
-          }
+          setAvailableTags(['Tất cả', ...extractedTags]);
         }
       }
     } catch (err) {
