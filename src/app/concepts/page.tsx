@@ -30,28 +30,19 @@ export default function ConceptsPage() {
       setLoading(true);
       const conceptAlbumId = 'master-concept';
 
-      const { data: albums } = await supabase
+      // CHỈ TRUY VẤN DUY NHẤT ALBUM 'master-concept' (Tuyệt đối không lấy album cá nhân của khách)
+      const { data: conceptAlbum } = await supabase
         .from('albums')
         .select('*')
-        .order('created_at', { ascending: false });
-
-      if (!albums || albums.length === 0) {
-        setLoading(false);
-        return;
-      }
-
-      const conceptAlbum = albums.find(a => 
-        a.id === conceptAlbumId || 
-        (a.tags && a.tags.trim() !== '') || 
-        a.name?.toLowerCase().includes('concept')
-      ) || albums[0];
+        .eq('id', conceptAlbumId)
+        .maybeSingle();
 
       if (conceptAlbum) {
         setAlbumTitle(conceptAlbum.name);
         const { data: files } = await supabase
           .from('images')
           .select('*')
-          .eq('album_id', conceptAlbum.id)
+          .eq('album_id', conceptAlbumId)
           .order('name', { ascending: true });
 
         if (files && files.length > 0) {
@@ -70,6 +61,10 @@ export default function ConceptsPage() {
           );
           setAvailableTags(['Tất cả', ...extractedTags]);
         }
+      } else {
+        setAlbumTitle('MẪU CONCEPT SHIN STUDIO');
+        setImages([]);
+        setAvailableTags(['Tất cả']);
       }
     } catch (err) {
       console.error('Error fetching concept photos:', err);
