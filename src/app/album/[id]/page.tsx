@@ -186,14 +186,14 @@ export default function AlbumClientView() {
           )}
           <div className={styles.welcomeGradientOverlay} />
 
-          <div className={styles.welcomeContent}>
-            {/* Brand Logo */}
-            <div className={styles.welcomeBrand}>
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/></svg>
-              <span>Shin Studio</span>
-            </div>
+          {/* Top Logo */}
+          <div className={styles.welcomeBrandTop}>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/></svg>
+            <span>Shin Studio</span>
+          </div>
 
-            {/* Tên Album */}
+          {/* Bottom Actions Box */}
+          <div className={styles.welcomeBottomBox}>
             <h1 className={styles.welcomeTitle}>Album {albumName}</h1>
             
             {albumClient && albumClient !== albumName && (
@@ -204,7 +204,6 @@ export default function AlbumClientView() {
               {images.length > 0 ? `${images.length} bức ảnh tuyệt đẹp đang chờ bạn chọn` : 'Đang tải bộ ảnh...'}
             </p>
 
-            {/* Nút Xem Album */}
             <button
               className={styles.welcomeBtn}
               onClick={() => setShowWelcome(false)}

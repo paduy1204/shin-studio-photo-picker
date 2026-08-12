@@ -476,14 +476,15 @@
 
 /* ====== WELCOME SPLASH PAGE ====== */
 
-/* ====== FULLSCREEN HERO WELCOME PAGE (SHOTPIK STYLE) ====== */
+
+/* ====== FULLSCREEN HERO WELCOME PAGE (SPLIT TOP / BOTTOM) ====== */
 .welcomeOverlay {
   position: fixed;
   inset: 0;
   z-index: 500;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   overflow: hidden;
   background: #0a0a0a;
@@ -495,7 +496,7 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  filter: brightness(0.7);
+  filter: brightness(0.85);
   transform: scale(1.02);
   transition: transform 10s ease;
 }
@@ -504,54 +505,65 @@
   transform: scale(1.06);
 }
 
+/* Gradient tối nhẹ ở đầu và đậm ở chân trang -> khu vực giữa hoàn toàn trong suốt */
 .welcomeGradientOverlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0.4) 0%,
-    rgba(0, 0, 0, 0.2) 40%,
-    rgba(0, 0, 0, 0.75) 100%
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(0, 0, 0, 0.1) 22%,
+    transparent 40%,
+    transparent 60%,
+    rgba(0, 0, 0, 0.6) 80%,
+    rgba(0, 0, 0, 0.85) 100%
   );
+  pointer-events: none;
 }
 
-.welcomeContent {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 2rem 1.5rem;
-  max-width: 650px;
-  width: 100%;
-  animation: fade-in-up 0.8s ease-out;
-}
-
-.welcomeBrand {
+/* Logo SHIN STUDIO đán lên sát TOP */
+.welcomeBrandTop {
+  position: absolute;
+  top: 2.5rem;
+  z-index: 3;
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  margin-bottom: 2rem;
   background: rgba(0, 0, 0, 0.35);
   padding: 8px 18px;
   border-radius: 30px;
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: fade-in-down 0.8s ease-out;
+}
+
+/* Khối thông tin và nút bấm đẩy xuống dưới BOTTOM */
+.welcomeBottomBox {
+  position: absolute;
+  bottom: 3rem;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.5rem;
+  max-width: 600px;
+  width: 100%;
+  animation: fade-in-up 0.8s ease-out;
 }
 
 .welcomeTitle {
-  font-size: 2.8rem;
+  font-size: 2.4rem;
   font-weight: 800;
   color: white;
-  margin-bottom: 0.8rem;
-  line-height: 1.15;
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  margin-bottom: 0.4rem;
+  line-height: 1.2;
+  text-shadow: 0 3px 15px rgba(0, 0, 0, 0.7);
   letter-spacing: -0.01em;
 }
 
@@ -560,41 +572,41 @@
   align-items: center;
   gap: 0.5rem;
   color: rgba(255, 255, 255, 0.9);
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 500;
-  margin-bottom: 0.5rem;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+  margin-bottom: 0.4rem;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
 }
 
 .welcomeSub {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.95rem;
-  margin-bottom: 2.5rem;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.92rem;
+  margin-bottom: 1.8rem;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
 }
 
 .welcomeBtn {
   display: inline-flex;
   align-items: center;
   gap: 0.8rem;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.2);
   color: white;
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 600;
-  padding: 14px 36px;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  padding: 13px 38px;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
   cursor: pointer;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 }
 
 .welcomeBtn:hover:not(:disabled) {
   background: white;
   color: #111;
   transform: translateY(-2px);
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
 }
 
 .welcomeBtn:disabled {
@@ -644,8 +656,11 @@
 }
 
 @media (max-width: 640px) {
-  .welcomeTitle { font-size: 1.8rem; }
-  .welcomeBrand { font-size: 0.8rem; margin-bottom: 1.5rem; }
+  .welcomeBrandTop { top: 1.5rem; font-size: 0.75rem; padding: 6px 14px; }
+  .welcomeBottomBox { bottom: 2rem; padding: 1rem; }
+  .welcomeTitle { font-size: 1.6rem; }
+  .welcomeSub { font-size: 0.85rem; margin-bottom: 1.2rem; }
+  .welcomeBtn { padding: 11px 30px; font-size: 0.95rem; }
   .heroCover { height: 240px; }
   .heroCoverTitle { font-size: 1.5rem; }
 }
