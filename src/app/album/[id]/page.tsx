@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useSwipeable } from 'react-swipeable';
 import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import styles from './page.module.css';
@@ -23,8 +24,13 @@ export default function AlbumClientView() {
   const [albumMeta, setAlbumMeta] = useState('');
   const [lightboxImg, setLightboxImg] = useState<any>(null);
   const [filterMode, setFilterMode] = useState<'all' | 'selected'>('all');
+  const [showAppBrowserWarning, setShowAppBrowserWarning] = useState(false);
 
   useEffect(() => {
+    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+    if (userAgent.indexOf('Zalo') > -1 || userAgent.indexOf('FBAN') > -1 || userAgent.indexOf('FBAV') > -1 || userAgent.indexOf('Messenger') > -1) {
+      setShowAppBrowserWarning(true);
+    }
     const loadData = async () => {
       if (!id) return;
       const { data: album } = await supabase.from('albums').select('*').eq('id', id).single();
@@ -73,8 +79,40 @@ export default function AlbumClientView() {
   const selectedCount = images.filter(img => img.liked).length;
   const displayImages = filterMode === 'all' ? images : images.filter(img => img.liked);
 
+  const currentIdx = lightboxImg ? displayImages.findIndex(img => img.id === lightboxImg.id) : -1;
+  const handleNext = useCallback((e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (currentIdx > -1 && currentIdx < displayImages.length - 1) {
+      setLightboxImg(displayImages[currentIdx + 1]);
+    }
+  }, [currentIdx, displayImages]);
+  
+  const handlePrev = useCallback((e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (currentIdx > 0) {
+      setLightboxImg(displayImages[currentIdx - 1]);
+    }
+  }, [currentIdx, displayImages]);
+
+  const handlers = useSwipeable({
+    onSwipedLeft: () => handleNext(),
+    onSwipedRight: () => handlePrev(),
+    trackMouse: true
+  });
+
   return (
     <div>
+      {showAppBrowserWarning && (
+        <div className={styles.zaloWarning}>
+          <h2>Cảnh báo trình duyệt!</h2>
+          <p>
+            Trình duyệt của Zalo/Facebook có thể gây lỗi hiển thị hoặc lỗi tải ảnh.<br/>
+            Vui lòng bấm vào dấu 3 chấm <b>(...)</b> ở góc trên bên phải màn hình và chọn <b>"Mở bằng trình duyệt"</b> (Chrome/Safari) để có trải nghiệm tốt nhất!
+          </p>
+          <button onClick={() => setShowAppBrowserWarning(false)} style={{padding: '10px 20px', background: 'var(--primary)', color: 'white', borderRadius: '8px'}}>Tôi đã hiểu</button>
+        </div>
+      )}
+
       {/* Header Album */}
       <header className={styles.albumHeader}>
         <h1 className={styles.albumTitle}>{albumName}</h1>
@@ -157,10 +195,23 @@ export default function AlbumClientView() {
               <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
           </div>
-          <div className={styles.lightboxContent} onClick={closeLightbox}>
+          <div className={styles.lightboxContent} onClick={closeLightbox} {...handlers}>
+            {currentIdx > 0 && (
+              <div className={`${styles.lightboxNav} ${styles.left}`} onClick={handlePrev}>
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              </div>
+            )}
+            
             <div className={styles.lightboxImageWrapper} onClick={(e) => e.stopPropagation()}>
               <img src={lightboxImg.url} alt={lightboxImg.name} className={styles.lightboxImage} />
             </div>
+            
+            {currentIdx < displayImages.length - 1 && (
+              <div className={`${styles.lightboxNav} ${styles.right}`} onClick={handleNext}>
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </div>
+            )}
+
             <div className={styles.lightboxActions} onClick={(e) => e.stopPropagation()}>
               <button 
                 className={`${styles.lightboxHeart} ${images.find(img => img.id === lightboxImg.id)?.liked ? styles.active : ''}`}

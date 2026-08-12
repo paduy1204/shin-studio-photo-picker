@@ -98,7 +98,11 @@
 }
 
 @media (max-width: 640px) {
-  .masonryGrid { column-count: 1; padding: 1rem; }
+  .masonryGrid { 
+    column-count: 3; 
+    column-gap: 4px;
+    padding: 4px; 
+  }
 }
 
 .masonryItem {
@@ -111,6 +115,13 @@
   background-color: var(--card-bg);
   cursor: pointer;
   animation: fade-in-up 1s ease-out;
+}
+
+@media (max-width: 640px) {
+  .masonryItem {
+    margin-bottom: 4px;
+    border-radius: 4px;
+  }
 }
 
 .masonryItem img {
@@ -261,7 +272,7 @@
 
 .lightboxImage {
   max-width: 100%;
-  max-height: 85vh;
+  max-height: calc(100vh - 120px);
   object-fit: contain;
   border-radius: 8px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.5);
@@ -365,4 +376,106 @@
     height: 1px;
     margin: 0.2rem 0 !important;
   }
+
+  .lightboxImage {
+    max-height: calc(100vh - 220px); /* Leave space for bottom actions on mobile */
+  }
+  
+  .imageOverlay {
+    padding: 0.25rem;
+  }
+  
+  .heartBtn {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .heartBtn svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .imageName {
+    display: none; /* Hide name on mobile to save space */
+  }
+  
+  .iconBtn {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .iconBtn svg {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .bottomActions {
+    gap: 0.2rem;
+  }
+}
+
+/* Nav arrows for lightbox */
+.lightboxNav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.1);
+  color: white;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s;
+  backdrop-filter: blur(5px);
+}
+
+.lightboxNav:hover {
+  background: rgba(255,255,255,0.3);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.lightboxNav.left {
+  left: 20px;
+}
+
+.lightboxNav.right {
+  right: 20px;
+}
+
+@media (max-width: 640px) {
+  .lightboxNav {
+    display: none; /* Hide arrows on mobile since we have swipe */
+  }
+}
+
+.zaloWarning {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--background);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  color: var(--foreground);
+}
+
+.zaloWarning h2 {
+  color: var(--primary);
+  margin-bottom: 1rem;
+}
+
+.zaloWarning p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
 }
