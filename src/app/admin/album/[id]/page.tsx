@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
+import Masonry from 'react-masonry-css';
 import { supabase } from '@/lib/supabaseClient';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
@@ -262,6 +263,17 @@ export default function AdminAlbumDetail() {
       alert("Đã xảy ra lỗi khi tạo file ZIP.");
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  
+  const handleSetCoverImage = async (img: any) => {
+    const coverUrl = img.thumbnailLink || img.webContentLink || img.url;
+    const { error } = await supabase.from('albums').update({ cover_image_url: coverUrl }).eq('id', id);
+    if (error) {
+      alert("Lỗi khi đặt ảnh bìa: " + error.message);
+    } else {
+      alert("Đã đặt ảnh " + img.name + " làm ảnh bìa Album thành công!");
     }
   };
 
@@ -588,13 +600,17 @@ export default function AdminAlbumDetail() {
       </div>
 
       {/* Grid */}
-      <main className={styles.masonryGrid}>
-        {displayImages.length === 0 ? (
-          <div style={{textAlign: 'center', gridColumn: '1 / -1', padding: '3rem', color: 'var(--text-muted)'}}>
-            Không có ảnh nào.
-          </div>
-        ) : (
-          displayImages.map((img, index) => (
+      {displayImages.length === 0 ? (
+        <div style={{textAlign: 'center', padding: '3rem', color: 'var(--text-muted)'}}>
+          Không có ảnh nào.
+        </div>
+      ) : (
+        <Masonry
+          breakpointCols={{ default: 4, 1200: 3, 800: 2, 500: 1 }}
+          className={styles.myMasonryGrid}
+          columnClassName={styles.myMasonryGridColumn}
+        >
+          {displayImages.map((img, index) => (
             <div 
               key={img.id} 
               className={`${styles.masonryItem} ${img.liked ? styles.selected : ''}`}
@@ -616,9 +632,9 @@ export default function AdminAlbumDetail() {
                 </div>
               </div>
             </div>
-          ))
-        )}
-      </main>
+          ))}
+        </Masonry>
+      )}
 
       {/* Export Modal (Chức năng cốt lõi) */}
       {isExportModalOpen && (
@@ -734,6 +750,14 @@ export default function AdminAlbumDetail() {
                 defaultValue={displayImages[lightboxIndex].comment}
                 onBlur={(e) => handleUpdateComment(displayImages[lightboxIndex].id, e.target.value)}
               />
+              <button 
+                className={styles.btnPrimary} 
+                onClick={() => handleSetCoverImage(displayImages[lightboxIndex])} 
+                style={{width: '100%', justifyContent: 'center', marginBottom: '0.5rem', background: '#3b82f6', color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '10px'}}
+              >
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                Đặt làm ảnh bìa Album
+              </button>
               <button className={styles.btnDownload} onClick={() => handleDownloadSingle(displayImages[lightboxIndex])} style={{width: '100%', justifyContent: 'center'}}>
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                 Tải ảnh này

@@ -877,3 +877,34 @@
   .myMasonryGridColumn { padding-left: 4px; }
   .masonryItem { margin-bottom: 4px; border-radius: 4px; }
 }
+
+.myMasonryGrid {
+  display: flex;
+  margin-left: -12px;
+  width: auto;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1rem 2rem;
+}
+.myMasonryGridColumn {
+  padding-left: 12px;
+  background-clip: padding-box;
+}
+.masonryItem {
+  margin-bottom: 12px;
+  position: relative;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  height: auto !important;
+  flex-grow: 0 !important;
+  animation: fade-in-up 0.5s ease-out;
+}
+.masonryItem img {
+  width: 100% !important;
+  min-width: 100% !important;
+  height: auto !important;
+  display: block;
+  transition: transform 0.3s ease;
+}
