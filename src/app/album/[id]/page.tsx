@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSwipeable } from 'react-swipeable';
+import Masonry from 'react-masonry-css';
 import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import styles from './page.module.css';
