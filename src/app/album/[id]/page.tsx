@@ -107,14 +107,18 @@ export default function AlbumClientView() {
       const mimeType = blob.type || (ext === 'png' ? 'image/png' : 'image/jpeg');
       const file = new File([blob], img.name, { type: mimeType });
 
-      // Bước 2: Dùng Web Share API (iOS Safari hỗ trợ) -> hiện "Lưu hình ảnh"
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      // Kiểm tra xem thiết bị có phải là iOS (iPhone/iPad) hay không
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+      // iOS: Dùng Web Share API -> hiện menu "Lưu hình ảnh" của iPhone
+      if (isIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
           title: img.name,
         });
       } else {
-        // Fallback cho các trình duyệt không hỗ trợ Web Share API
+        // Android / Máy tính: Tải trực tiếp file về bộ nhớ máy / Bộ sưu tập
         const blobUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = blobUrl;
