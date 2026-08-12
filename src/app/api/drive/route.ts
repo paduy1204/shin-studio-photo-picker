@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
 const FALLBACK_GOOGLE_API_KEY = 'AIzaSyAORt4265h7ilGe0rA_TKcYoGhN7I3Xmxc';
 
 async function fetchAllFilesFromDrive(drive: any, query: string, fields: string) {
@@ -28,7 +31,7 @@ async function scanFolderRecursive(drive: any, currentFolderId: string, currentT
   if (depth > 3) return;
 
   try {
-    // 1. Quét TOÀN BỘ ảnh trong thư mục hiện tại (với pagination nextPageToken)
+    // 1. Quét TOÀN BỘ ảnh trong thư mục hiện tại (song song)
     const images = await fetchAllFilesFromDrive(
       drive,
       `'${currentFolderId}' in parents and mimeType contains 'image/' and trashed = false`,
@@ -55,17 +58,21 @@ async function scanFolderRecursive(drive: any, currentFolderId: string, currentT
       });
     }
 
-    // 2. Quét TOÀN BỘ thư mục con trong thư mục hiện tại (với pagination nextPageToken)
+    // 2. Quét SONG SONG tất cả các thư mục con (Promise.all)
     const subfolders = await fetchAllFilesFromDrive(
       drive,
       `'${currentFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
       'files(id, name)'
     );
 
-    for (const subfolder of subfolders) {
-      const subfolderName = subfolder.name ? subfolder.name.trim() : '';
-      const nextTagName = subfolderName || currentTagName;
-      await scanFolderRecursive(drive, subfolder.id, nextTagName, allFiles, depth + 1);
+    if (subfolders && subfolders.length > 0) {
+      await Promise.all(
+        subfolders.map(async (subfolder: any) => {
+          const subfolderName = subfolder.name ? subfolder.name.trim() : '';
+          const nextTagName = subfolderName || currentTagName;
+          await scanFolderRecursive(drive, subfolder.id, nextTagName, allFiles, depth + 1);
+        })
+      );
     }
   } catch (e: any) {
     console.warn(`Lỗi quét đệ quy thư mục [${currentFolderId}]:`, e.message);
@@ -89,12 +96,12 @@ export async function POST(request: Request) {
 
     const allFiles: any[] = [];
 
-    // Quét đệ quy TOÀN BỘ thư mục lớn và tất cả 9+ thư mục con lồng nhau không giới hạn
+    // Quét song song TOÀN BỘ thư mục lớn và tất cả 9+ thư mục con
     await scanFolderRecursive(drive, folderId, '', allFiles, 0);
 
     if (allFiles.length === 0) {
       return NextResponse.json({ 
-        error: 'Không tìm thấy hình ảnh nào trong thư mục này. Vui lòng đảm bảo thư mục Google Drive đã được bật quyền Chia sẻ (Share) dạng "Bất kỳ ai có liên kết đều có thể xem"!' 
+        error: 'Không tìm thấy hình ảnh nào trong thư mục này. Vui lòng kiểm tra lại quyền truy cập thư mục Google Drive!' 
       }, { status: 404 });
     }
 
