@@ -321,7 +321,7 @@ export default function AdminDashboard() {
             fontWeight: 700,
             border: '1px solid rgba(232, 93, 117, 0.3)',
             display: 'inline-flex',
-            align-items: 'center',
+            alignItems: 'center',
             gap: '0.4rem'
           }}>
             📸 Quản Lý Concept Mẫu Studio ➔
@@ -499,46 +499,6 @@ export default function AdminDashboard() {
                 <button type="button" className={styles.btnCancel} onClick={() => setIsModalOpen(false)}>Hủy bỏ</button>
                 <button type="submit" className={styles.btnSubmit} disabled={isScanning}>
                   {isScanning ? 'Đang tải...' : 'Tạo ngay'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      {/* Modal Cài đặt Concept Mẫu */}
-      {isConceptModalOpen && (
-        <div className={styles.modalOverlay} onClick={() => setIsConceptModalOpen(false)}>
-          <div className={styles.modalContainer} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h2>Cài đặt Album Concept Mẫu</h2>
-              <button className={styles.closeBtn} onClick={() => setIsConceptModalOpen(false)}>✕</button>
-            </div>
-            
-            <form onSubmit={handleConceptSubmit} className={styles.modalBody}>
-              <div className={styles.formGroup}>
-                <label>Link Google Drive chứa ảnh Concept Mẫu <span style={{color: 'red'}}>*</span></label>
-                <div className={styles.inputWithIcon}>
-                  <input 
-                    type="text" 
-                    placeholder="Dán Link Google Drive thư mục lớn chứa các thư mục con Concept" 
-                    value={conceptDriveLink} 
-                    onChange={e => setConceptDriveLink(e.target.value)} 
-                    required 
-                  />
-                  <div className={styles.iconBtn}>+</div>
-                </div>
-              </div>
-
-              <div className={styles.noteBox} style={{ background: 'rgba(232, 93, 117, 0.1)', borderColor: 'rgba(232, 93, 117, 0.3)' }}>
-                <strong>📌 Hướng dẫn tổ chức thư mục trên Google Drive:</strong><br/>
-                - Trên Google Drive, bạn tạo 1 thư mục lớn (ví dụ: <code>MẪU CONCEPT SHIN STUDIO</code>).<br/>
-                - Bên trong thư mục lớn đó, tạo các thư mục con đặt tên là: <code>BEAUTY</code>, <code>BẦU</code>, <code>COUPLE</code>, <code>PROFILE</code>, <code>CHO BÉ</code>, <code>SƠ SINH</code>... và thả ảnh vào đúng các thư mục này.<br/>
-                - Dán link thư mục lớn vào ô trên ➔ Hệ thống sẽ tự động quét & tạo các Tab phân loại tương ứng cho khách xem!
-              </div>
-
-              <div className={styles.modalFooter}>
-                <button type="button" className={styles.btnCancel} onClick={() => setIsConceptModalOpen(false)}>Hủy bỏ</button>
-                <button type="submit" className={styles.btnSubmit} disabled={isSyncingConcept}>
-                  {isSyncingConcept ? 'Đang đồng bộ ảnh...' : 'Đồng bộ ngay'}
                 </button>
               </div>
             </form>

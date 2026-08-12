@@ -1,4 +1,4 @@
-import { NextResponse } from 'next';
+import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 
 export async function POST(request: Request) {
@@ -33,16 +33,16 @@ export async function POST(request: Request) {
 
     if (directImagesRes.data.files) {
       for (const file of directImagesRes.data.files) {
-        // Thử trích xuất tag từ tên file nếu có dạng [BEAUTY] 01.jpg hoặc BEAUTY_01.jpg
+        const fileName = file.name || '';
         let tag = '';
-        const match = file.name.match(/^\[(.*?)\]/) || file.name.match(/^([a-zA-Z0-9À-ỹ\s]+)[_-]/);
+        const match = fileName.match(/^\[(.*?)\]/) || fileName.match(/^([a-zA-Z0-9À-ỹ\s]+)[_-]/);
         if (match && match[1]) {
           tag = match[1].trim();
         }
 
         allFiles.push({
           id: file.id,
-          name: file.name,
+          name: fileName,
           tag: tag,
           thumbnailLink: file.thumbnailLink ? file.thumbnailLink.replace(/=s\d+/, '=s1000') : '',
           webContentLink: file.webContentLink,
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
 
     if (subfoldersRes.data.files && subfoldersRes.data.files.length > 0) {
       for (const subfolder of subfoldersRes.data.files) {
-        const subfolderName = subfolder.name.trim();
+        const subfolderName = subfolder.name ? subfolder.name.trim() : '';
 
         const subfolderImagesRes = await drive.files.list({
           q: `'${subfolder.id}' in parents and mimeType contains 'image/' and trashed = false`,
@@ -73,8 +73,8 @@ export async function POST(request: Request) {
           for (const file of subfolderImagesRes.data.files) {
             allFiles.push({
               id: file.id,
-              name: file.name,
-              tag: subfolderName, // Gán tag bằng tên thư mục con (ví dụ: BEAUTY, BẦU, COUPLE...)
+              name: file.name || '',
+              tag: subfolderName,
               thumbnailLink: file.thumbnailLink ? file.thumbnailLink.replace(/=s\d+/, '=s1000') : '',
               webContentLink: file.webContentLink,
               webViewLink: file.webViewLink
