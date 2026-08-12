@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSwipeable } from 'react-swipeable';
 import Masonry from 'react-masonry-css';
 import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
@@ -94,12 +93,6 @@ export default function AlbumClientView() {
       setLightboxImg(displayImages[currentIdx - 1]);
     }
   }, [currentIdx, displayImages]);
-
-  const handlers = useSwipeable({
-    onSwipedLeft: () => handleNext(),
-    onSwipedRight: () => handlePrev(),
-    trackMouse: true
-  });
 
   return (
     <div>
@@ -196,7 +189,7 @@ export default function AlbumClientView() {
               <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
           </div>
-          <div className={styles.lightboxContent} onClick={closeLightbox} {...handlers}>
+          <div className={styles.lightboxContent} onClick={closeLightbox}>
             {currentIdx > 0 && (
               <div className={`${styles.lightboxNav} ${styles.left}`} onClick={handlePrev}>
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>

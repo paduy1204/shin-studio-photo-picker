@@ -359,11 +359,12 @@
   }
   
   .lightboxActions {
-    flex-direction: column;
-    gap: 0.8rem;
-    border-radius: 15px;
+    flex-direction: row;
+    justify-content: center;
+    gap: 1.5rem;
     padding: 1rem;
-    width: 90%;
+    border-radius: 30px;
+    width: auto;
   }
 
   .lightboxActions button {
@@ -446,11 +447,7 @@
   right: 20px;
 }
 
-@media (max-width: 640px) {
-  .lightboxNav {
-    display: none; /* Hide arrows on mobile since we have swipe */
-  }
-}
+
 
 .zaloWarning {
   position: fixed;
@@ -516,4 +513,25 @@
   .myMasonryGrid { margin-left: -4px; padding: 4px; }
   .myMasonryGridColumn { padding-left: 4px; }
   .masonryItem { margin-bottom: 4px; border-radius: 4px; }
+}
+
+.iconActionBtn {
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.iconActionBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+.iconActionBtn.activeHeart {
+  color: var(--heart);
 }
