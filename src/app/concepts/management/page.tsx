@@ -3,11 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { getCurrentUser } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
 import styles from './page.module.css';
 
-export default function AdminConceptsPage() {
-  const [conceptAlbum, setConceptAlbum] = useState<any>(null);
+export default function ConceptManagementPage() {
+  const router = useRouter();
   const [images, setImages] = useState<any[]>([]);
   const [tagsList, setTagsList] = useState<string[]>([]);
   const [driveLinkInput, setDriveLinkInput] = useState('');
@@ -16,26 +18,20 @@ export default function AdminConceptsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // 🛡️ AUTH GUARD: Kiểm tra xem đã đăng nhập chưa
+    const currentUser = getCurrentUser();
+    if (!currentUser) {
+      router.push('/login');
+      return;
+    }
     loadConceptData();
-  }, []);
+  }, [router]);
 
   const loadConceptData = async () => {
     try {
       setLoading(true);
       const conceptAlbumId = 'master-concept';
 
-      // 1. Tải thông tin album Master Concept
-      const { data: album } = await supabase
-        .from('albums')
-        .select('*')
-        .eq('id', conceptAlbumId)
-        .maybeSingle();
-
-      if (album) {
-        setConceptAlbum(album);
-      }
-
-      // 2. Tải danh sách ảnh concept
       const { data: files } = await supabase
         .from('images')
         .select('*')
@@ -85,7 +81,6 @@ export default function AdminConceptsPage() {
 
       const conceptAlbumId = 'master-concept';
 
-      // Tạo/Cập nhật Album Master Concept tách biệt
       const { error: albumError } = await supabase.from('albums').upsert({
         id: conceptAlbumId,
         name: 'MẪU CONCEPT SHIN STUDIO',
@@ -103,7 +98,6 @@ export default function AdminConceptsPage() {
       if (albumError) console.error('Album Upsert Error:', albumError);
 
       if (data.files && data.files.length > 0) {
-        // Xóa các ảnh cũ của Master Concept để cập nhật mới 100%
         await supabase.from('images').delete().eq('album_id', conceptAlbumId);
 
         const imageInserts = data.files.map((file: any) => ({
@@ -136,34 +130,29 @@ export default function AdminConceptsPage() {
 
   return (
     <div className={styles.adminContainer}>
-      {/* Navbar */}
       <nav className={styles.navbar}>
         <div className={styles.navLeft}>
           <Link href="/">
             <Image src="/logo.png" alt="Logo" width={40} height={40} className={styles.navLogo} />
           </Link>
           <div className={styles.navTitle}>
-            <span>QUẢN LÝ ALBUM CONCEPT MẪU</span>
+            <span>QUẢN LÝ ALBUM CONCEPT MẪU (/concepts/management)</span>
           </div>
         </div>
         <div className={styles.navRight}>
-          <Link href="/admin" className={styles.navLink}>
-            ← Về Album Khách Hàng
-          </Link>
           <Link href="/concepts" target="_blank" className={styles.btnMasterLink}>
-            👁️ Xem Trang Master Link (/concepts)
+            👁️ Xem Trang Master Link Khách Xem (/concepts)
           </Link>
         </div>
       </nav>
 
-      {/* Main Content */}
       <main className={styles.mainContent}>
         <div className={styles.dashboardCard}>
           <div className={styles.cardHeader}>
             <div>
               <h2 className={styles.cardTitle}>Album Concept Mẫu Độc Quyền (Shin Studio)</h2>
               <p className={styles.cardSub}>
-                Trang này hoàn toàn tách biệt với Album giao cho khách chọn hình. Nơi lưu trữ bộ sưu tập mẫu để nhân viên tư vấn gửi cho khách xem bối cảnh.
+                Tính năng quản lý ảnh mẫu bối cảnh tư vấn cho khách. Hoàn toàn tách biệt và bảo mật với các Album trả ảnh cho khách hàng.
               </p>
             </div>
             <button className={styles.btnPrimary} onClick={() => setIsModalOpen(true)}>
@@ -186,7 +175,6 @@ export default function AdminConceptsPage() {
             </div>
           </div>
 
-          {/* Tag List Badges */}
           {tagsList.length > 0 && (
             <div className={styles.tagsContainer}>
               <span className={styles.tagsTitle}>Các mục Concept đang hiển thị:</span>
@@ -201,7 +189,6 @@ export default function AdminConceptsPage() {
           )}
         </div>
 
-        {/* Dynamic Instructions */}
         <div className={styles.guideCard}>
           <h3>💡 Cách Thêm / Xóa / Chỉnh sửa Mục Concept Mẫu:</h3>
           <ol className={styles.guideList}>
@@ -213,7 +200,6 @@ export default function AdminConceptsPage() {
         </div>
       </main>
 
-      {/* Modal Đồng bộ Drive */}
       {isModalOpen && (
         <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
           <div className={styles.modalContainer} onClick={e => e.stopPropagation()}>

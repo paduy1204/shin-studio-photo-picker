@@ -4,23 +4,36 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
+import { useRouter } from 'next/navigation';
+import { getCurrentUser } from '@/lib/auth';
 import styles from './page.module.css';
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const demoAlbums = [
-    { id: '1', name: 'Chị Thanh Uyển 11/8', date: '11-08-2026', hearts: 19, comments: 0, cover: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=800&q=80' },
-    { id: '2', name: 'Chị Hoàng Oanh 10/8', date: '10-08-2026', hearts: 32, comments: 0, cover: 'https://images.unsplash.com/photo-1519699047748-de8e457a634e?auto=format&fit=crop&w=800&q=80' },
-    { id: '3', name: 'Chị Thảo 10/8', date: '10-08-2026', hearts: 120, comments: 4, cover: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&w=800&q=80' },
-    { id: '4', name: 'Chị Yến Vy 9/8', date: '09-08-2026', hearts: 19, comments: 0, cover: 'https://images.unsplash.com/photo-1513258496099-48168024aec0?auto=format&fit=crop&w=800&q=80' },
+    {
+      id: 'demo-1',
+      name: 'CHỊ HÀ 20-10 (BỘ SƯU TẬP TẾT 2026)',
+      date: '20/10/2026',
+      cover: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=800',
+      likedCount: 12,
+      commentCount: 3
+    }
   ];
 
   const [albums, setAlbums] = useState<any[]>([]);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // 🛡️ AUTH GUARD: Yêu cầu đăng nhập trước khi vào Admin Quản lý Album Khách
+    const currentUser = getCurrentUser();
+    if (!currentUser) {
+      router.push('/login');
+      return;
+    }
     setMounted(true);
     fetchAlbums();
-  }, []);
+  }, [router]);
 
   const fetchAlbums = async () => {
     const { data, error } = await supabase
@@ -325,21 +338,6 @@ export default function AdminDashboard() {
             gap: '0.3rem'
           }}>
             👥 Quản Lý Tài Khoản
-          </Link>
-          <Link href="/admin/concepts" style={{
-            background: 'rgba(232, 93, 117, 0.15)',
-            color: 'var(--primary)',
-            padding: '8px 16px',
-            borderRadius: '20px',
-            textDecoration: 'none',
-            fontSize: '0.88rem',
-            fontWeight: 700,
-            border: '1px solid rgba(232, 93, 117, 0.3)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.4rem'
-          }}>
-            📸 Quản Lý Concept Mẫu Studio ➔
           </Link>
           <div className={styles.searchBar}>
             <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>

@@ -3,11 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getStoredUsers, UserAccount } from '@/lib/auth';
+import { useRouter } from 'next/navigation';
+import { getStoredUsers, getCurrentUser, UserAccount } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
 import styles from './page.module.css';
 
 export default function AdminUsersPage() {
+  const router = useRouter();
   const [users, setUsers] = useState<UserAccount[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -18,8 +20,14 @@ export default function AdminUsersPage() {
   });
 
   useEffect(() => {
+    // 🛡️ AUTH GUARD: Phải đăng nhập mới được vào trang Quản lý tài khoản
+    const currentUser = getCurrentUser();
+    if (!currentUser) {
+      router.push('/login');
+      return;
+    }
     loadUsers();
-  }, []);
+  }, [router]);
 
   const loadUsers = async () => {
     const data = await getStoredUsers();
