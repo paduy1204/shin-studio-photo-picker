@@ -56,7 +56,8 @@ export default function ConceptManagementPage() {
         .from('images')
         .select('*')
         .eq('album_id', conceptAlbumId)
-        .order('name', { ascending: true });
+        .order('name', { ascending: true })
+        .range(0, 10000);
 
       if (files && files.length > 0) {
         const formatted = files.map((f: any) => {

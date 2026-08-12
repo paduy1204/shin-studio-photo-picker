@@ -3,53 +3,69 @@ import { google } from 'googleapis';
 
 const FALLBACK_GOOGLE_API_KEY = 'AIzaSyAORt4265h7ilGe0rA_TKcYoGhN7I3Xmxc';
 
+async function fetchAllFilesFromDrive(drive: any, query: string, fields: string) {
+  let files: any[] = [];
+  let pageToken: string | undefined = undefined;
+
+  do {
+    const res: any = await drive.files.list({
+      q: query,
+      fields: `nextPageToken, ${fields}`,
+      pageSize: 1000,
+      pageToken: pageToken
+    });
+
+    if (res.data.files) {
+      files = files.concat(res.data.files);
+    }
+    pageToken = res.data.nextPageToken;
+  } while (pageToken);
+
+  return files;
+}
+
 async function scanFolderRecursive(drive: any, currentFolderId: string, currentTagName: string, allFiles: any[], depth = 0) {
   if (depth > 3) return;
 
   try {
-    // 1. Quét ảnh trong thư mục hiện tại
-    const imagesRes = await drive.files.list({
-      q: `'${currentFolderId}' in parents and mimeType contains 'image/' and trashed = false`,
-      fields: 'files(id, name, mimeType, thumbnailLink, webContentLink, webViewLink)',
-      pageSize: 1000,
-      orderBy: 'name',
-    });
+    // 1. Quét TOÀN BỘ ảnh trong thư mục hiện tại (với pagination nextPageToken)
+    const images = await fetchAllFilesFromDrive(
+      drive,
+      `'${currentFolderId}' in parents and mimeType contains 'image/' and trashed = false`,
+      'files(id, name, mimeType, thumbnailLink, webContentLink, webViewLink)'
+    );
 
-    if (imagesRes.data.files) {
-      for (const file of imagesRes.data.files) {
-        const fileName = file.name || '';
-        let tag = currentTagName;
-        if (!tag) {
-          const match = fileName.match(/^\[(.*?)\]/) || fileName.match(/^([a-zA-Z0-9À-ỹ\s]+)[_-]/);
-          if (match && match[1]) {
-            tag = match[1].trim();
-          }
+    for (const file of images) {
+      const fileName = file.name || '';
+      let tag = currentTagName;
+      if (!tag) {
+        const match = fileName.match(/^\[(.*?)\]/) || fileName.match(/^([a-zA-Z0-9À-ỹ\s]+)[_-]/);
+        if (match && match[1]) {
+          tag = match[1].trim();
         }
-
-        allFiles.push({
-          id: file.id,
-          name: fileName,
-          tag: tag,
-          thumbnailLink: file.thumbnailLink ? file.thumbnailLink.replace(/=s\d+/, '=s1000') : '',
-          webContentLink: file.webContentLink,
-          webViewLink: file.webViewLink
-        });
       }
+
+      allFiles.push({
+        id: file.id,
+        name: fileName,
+        tag: tag,
+        thumbnailLink: file.thumbnailLink ? file.thumbnailLink.replace(/=s\d+/, '=s1000') : '',
+        webContentLink: file.webContentLink,
+        webViewLink: file.webViewLink
+      });
     }
 
-    // 2. Quét đệ quy tất cả các thư mục con bên trong (Subfolders / Nested folders)
-    const subfoldersRes = await drive.files.list({
-      q: `'${currentFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
-      fields: 'files(id, name)',
-      pageSize: 100,
-    });
+    // 2. Quét TOÀN BỘ thư mục con trong thư mục hiện tại (với pagination nextPageToken)
+    const subfolders = await fetchAllFilesFromDrive(
+      drive,
+      `'${currentFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+      'files(id, name)'
+    );
 
-    if (subfoldersRes.data.files && subfoldersRes.data.files.length > 0) {
-      for (const subfolder of subfoldersRes.data.files) {
-        const subfolderName = subfolder.name ? subfolder.name.trim() : '';
-        const nextTagName = subfolderName || currentTagName;
-        await scanFolderRecursive(drive, subfolder.id, nextTagName, allFiles, depth + 1);
-      }
+    for (const subfolder of subfolders) {
+      const subfolderName = subfolder.name ? subfolder.name.trim() : '';
+      const nextTagName = subfolderName || currentTagName;
+      await scanFolderRecursive(drive, subfolder.id, nextTagName, allFiles, depth + 1);
     }
   } catch (e: any) {
     console.warn(`Lỗi quét đệ quy thư mục [${currentFolderId}]:`, e.message);
@@ -73,7 +89,7 @@ export async function POST(request: Request) {
 
     const allFiles: any[] = [];
 
-    // Quét đệ quy toàn bộ thư mục lớn và các thư mục con lồng nhau
+    // Quét đệ quy TOÀN BỘ thư mục lớn và tất cả 9+ thư mục con lồng nhau không giới hạn
     await scanFolderRecursive(drive, folderId, '', allFiles, 0);
 
     if (allFiles.length === 0) {
