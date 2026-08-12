@@ -311,6 +311,21 @@ export default function AdminDashboard() {
           </div>
         </div>
         <div className={styles.navRight}>
+          <Link href="/admin/users" style={{
+            background: 'rgba(255, 255, 255, 0.08)',
+            color: 'white',
+            padding: '8px 14px',
+            borderRadius: '20px',
+            textDecoration: 'none',
+            fontSize: '0.85rem',
+            fontWeight: 600,
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.3rem'
+          }}>
+            👥 Quản Lý Tài Khoản
+          </Link>
           <Link href="/admin/concepts" style={{
             background: 'rgba(232, 93, 117, 0.15)',
             color: 'var(--primary)',

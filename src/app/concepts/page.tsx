@@ -3,9 +3,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Masonry from 'react-masonry-css';
 import { supabase } from '@/lib/supabaseClient';
+import { getCurrentUser, UserAccount } from '@/lib/auth';
 import styles from './page.module.css';
 
 export default function ConceptsPage() {
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [images, setImages] = useState<any[]>([]);
   const [availableTags, setAvailableTags] = useState<string[]>(['Tất cả']);
   const [activeCategoryTag, setActiveCategoryTag] = useState<string>('Tất cả');
@@ -13,15 +15,21 @@ export default function ConceptsPage() {
   const [loading, setLoading] = useState(true);
   const [albumTitle, setAlbumTitle] = useState('MẪU CONCEPT SHIN STUDIO');
 
+  // Modal quản lý drive dành cho Staff/Admin khi đăng nhập
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [driveLinkInput, setDriveLinkInput] = useState('');
+  const [isSyncing, setIsSyncing] = useState(false);
+
   useEffect(() => {
+    setCurrentUser(getCurrentUser());
     fetchMasterConceptPhotos();
   }, []);
 
   const fetchMasterConceptPhotos = async () => {
     try {
       setLoading(true);
+      const conceptAlbumId = 'master-concept';
 
-      // Tìm album có gán Tag hoặc tên chứa "Concept"
       const { data: albums } = await supabase
         .from('albums')
         .select('*')
@@ -32,11 +40,10 @@ export default function ConceptsPage() {
         return;
       }
 
-      // Ưu tiên album có tags hoặc tên chứa "Concept" / "Mẫu"
       const conceptAlbum = albums.find(a => 
+        a.id === conceptAlbumId || 
         (a.tags && a.tags.trim() !== '') || 
-        a.name?.toLowerCase().includes('concept') || 
-        a.name?.toLowerCase().includes('mẫu')
+        a.name?.toLowerCase().includes('concept')
       ) || albums[0];
 
       if (conceptAlbum) {
@@ -61,7 +68,6 @@ export default function ConceptsPage() {
           const extractedTags = Array.from(
             new Set(formatted.map(img => img.tag).filter(t => t && t.trim() !== ''))
           );
-
           setAvailableTags(['Tất cả', ...extractedTags]);
         }
       }
@@ -72,7 +78,81 @@ export default function ConceptsPage() {
     }
   };
 
-  // Lọc ảnh trực tiếp hiển thị ra lưới theo Tab được bấm
+  const handleSyncSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!driveLinkInput) {
+      alert('Vui lòng nhập Link Google Drive chứa các thư mục Concept!');
+      return;
+    }
+
+    const match = driveLinkInput.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+    const folderId = match ? match[1] : null;
+
+    if (!folderId) {
+      alert('Link Google Drive không đúng định dạng. Cần link thư mục (chứa /folders/)');
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      const response = await fetch('/api/drive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folderId }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error);
+
+      const conceptAlbumId = 'master-concept';
+
+      const { error: albumError } = await supabase.from('albums').upsert({
+        id: conceptAlbumId,
+        name: 'MẪU CONCEPT SHIN STUDIO',
+        client: 'Shin Studio Concept Showcase',
+        slug: 'concepts',
+        tags: 'Concept Mẫu Studio',
+        allow_comments: true,
+        watermark: false,
+        show_name_card: true,
+        password_protect: false,
+        allow_download: false,
+        limit_selection: false
+      });
+
+      if (albumError) console.error('Album Upsert Error:', albumError);
+
+      if (data.files && data.files.length > 0) {
+        await supabase.from('images').delete().eq('album_id', conceptAlbumId);
+
+        const imageInserts = data.files.map((file: any) => ({
+          id: file.id,
+          album_id: conceptAlbumId,
+          name: file.name,
+          tag: file.tag || '',
+          url: file.webContentLink || '',
+          thumbnail_link: file.thumbnailLink,
+          web_content_link: file.webContentLink
+        }));
+
+        const chunkSize = 500;
+        for (let i = 0; i < imageInserts.length; i += chunkSize) {
+          const chunk = imageInserts.slice(i, i + chunkSize);
+          await supabase.from('images').upsert(chunk);
+        }
+      }
+
+      alert(`Đồng bộ thành công ${data.files.length} ảnh Concept Mẫu! Khách sẽ thấy ngay hình ảnh mới.`);
+      setIsModalOpen(false);
+      setDriveLinkInput('');
+      fetchMasterConceptPhotos();
+    } catch (err: any) {
+      alert('Lỗi: ' + err.message);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const displayImages = images.filter((img) => {
     if (activeCategoryTag === 'Tất cả') return true;
     const tagLower = activeCategoryTag.toLowerCase();
@@ -105,10 +185,34 @@ export default function ConceptsPage() {
     <div className={styles.container}>
       {/* Header */}
       <header className={styles.header}>
-        <div className={styles.brandBadge}>
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/></svg>
-          <span>Shin Studio</span>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <div className={styles.brandBadge}>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/></svg>
+            <span>Shin Studio</span>
+          </div>
+
+          {/* CHỈ HIỂN THỊ NÚT QUẢN LÝ CHO NHÂN VIÊN/ADMIN ĐÃ ĐĂNG NHẬP */}
+          {currentUser && (
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              style={{
+                background: 'var(--primary)',
+                color: 'white',
+                border: 'none',
+                padding: '6px 16px',
+                borderRadius: '20px',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                marginBottom: '1rem',
+                boxShadow: '0 4px 12px rgba(232, 93, 117, 0.4)'
+              }}
+            >
+              ⚙️ Cập Nhật Link Drive Concept ({currentUser.name})
+            </button>
+          )}
         </div>
+
         <h1 className={styles.title}>{albumTitle}</h1>
         <p className={styles.subtitle}>
           Khám phá & lựa chọn mẫu Concept chụp ảnh yêu thích của bạn
@@ -130,13 +234,12 @@ export default function ConceptsPage() {
         </div>
       </div>
 
-      {/* Full Photo Grid (Masonry) - Hiển thị trực tiếp full ảnh giống Shotpik */}
+      {/* Full Photo Grid (Masonry) */}
       {loading ? (
         <div className={styles.emptyState}>Đang tải hình ảnh Concept...</div>
       ) : displayImages.length === 0 ? (
         <div className={styles.emptyState}>
-          Chưa có hình ảnh mẫu nào thuộc mục <strong>"{activeCategoryTag}"</strong>.<br/>
-          Admin chỉ cần tạo Folder trên Google Drive chứa các thư mục con <em>({availableTags.filter(t => t !== 'Tất cả').join(', ')})</em> để tự động cập nhật ảnh vào đây!
+          Chưa có hình ảnh mẫu nào thuộc mục <strong>"{activeCategoryTag}"</strong>.
         </div>
       ) : (
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
@@ -167,6 +270,34 @@ export default function ConceptsPage() {
           )}
           <div className={styles.lightboxContent} onClick={e => e.stopPropagation()}>
             <img src={lightboxImg.url} alt={lightboxImg.name} />
+          </div>
+        </div>
+      )}
+
+      {/* Modal Cập Nhật Link Drive trực tiếp trên trang Concept (Chỉ dành cho Admin/Sales) */}
+      {isModalOpen && (
+        <div className={styles.lightbox} onClick={() => setIsModalOpen(false)}>
+          <div style={{ background: '#1e1e24', padding: '2rem', borderRadius: '16px', maxWidth: '500px', width: '100%', color: 'white' }} onClick={e => e.stopPropagation()}>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '1rem' }}>Cập Nhật Link Drive Concept Mẫu</h2>
+            <form onSubmit={handleSyncSubmit}>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: 700, marginBottom: '0.5rem' }}>Link Google Drive chứa ảnh Concept:</label>
+                <input 
+                  type="text" 
+                  placeholder="Dán Link Google Drive chứa các thư mục con"
+                  value={driveLinkInput}
+                  onChange={e => setDriveLinkInput(e.target.value)}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.4)', color: 'white' }}
+                  required
+                />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                <button type="button" onClick={() => setIsModalOpen(false)} style={{ padding: '8px 16px', borderRadius: '8px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'white', cursor: 'pointer' }}>Hủy</button>
+                <button type="submit" disabled={isSyncing} style={{ padding: '8px 20px', borderRadius: '8px', background: 'var(--primary)', border: 'none', color: 'white', fontWeight: 700, cursor: 'pointer' }}>
+                  {isSyncing ? 'Đang cập nhật...' : 'Cập nhật ngay'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
