@@ -63,7 +63,7 @@ export default function ConceptsPage() {
             const cleanName = f.name.replace(/^\[.*?\]\s*/, '');
             return {
               id: f.id,
-              url: `/api/proxy-image?id=${f.id}`,
+              url: f.thumbnail_link || f.web_content_link || f.url || `https://lh3.googleusercontent.com/d/${f.id}=s1000`,
               driveFileId: f.drive_file_id || null,
               webContentLink: f.web_content_link || null,
               name: cleanName,
