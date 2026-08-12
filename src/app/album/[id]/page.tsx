@@ -31,6 +31,7 @@ export default function AlbumClientView() {
   const [lightboxImg, setLightboxImg] = useState<any>(null);
   const [filterMode, setFilterMode] = useState<'all' | 'selected'>('all');
   const [showAppBrowserWarning, setShowAppBrowserWarning] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
     const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
@@ -77,6 +78,8 @@ export default function AlbumClientView() {
   };
 
   const handleDownload = async (img: any) => {
+    if (downloadingId === img.id) return; // Tránh bấm 2 lần
+    setDownloadingId(img.id);
     try {
       // Bước 1: Tải ảnh về dưới dạng blob qua proxy (tránh CORS)
       const response = await fetch(img.url);
@@ -94,18 +97,17 @@ export default function AlbumClientView() {
           files: [file],
           title: img.name,
         });
-        return;
+      } else {
+        // Fallback cho các trình duyệt không hỗ trợ Web Share API
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = img.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
       }
-
-      // Fallback cho các trình duyệt không hỗ trợ Web Share API
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = img.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
     } catch (err: any) {
       // Nếu user cancel share hoặc lỗi khác -> fallback mở link drive
       if (err?.name !== 'AbortError') {
@@ -114,6 +116,8 @@ export default function AlbumClientView() {
           window.open(downloadUrl, '_blank');
         }
       }
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -212,8 +216,17 @@ export default function AlbumClientView() {
                   </button>
                 </div>
                 <div className={styles.bottomActions}>
-                  <button className={styles.iconBtn} title="Tải xuống" onClick={(e) => { e.stopPropagation(); handleDownload(img); }}>
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <button 
+                    className={`${styles.iconBtn} ${downloadingId === img.id ? styles.downloading : ''}`} 
+                    title="Tải xuống" 
+                    onClick={(e) => { e.stopPropagation(); handleDownload(img); }}
+                    disabled={downloadingId === img.id}
+                  >
+                    {downloadingId === img.id ? (
+                      <span className={styles.spinnerSmall} />
+                    ) : (
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    )}
                   </button>
                 </div>
               </div>
@@ -266,12 +279,19 @@ export default function AlbumClientView() {
 
             {/* Tải xuống */}
             <button
-              className={styles.lightboxActionBtn}
+              className={`${styles.lightboxActionBtn} ${downloadingId === lightboxImg.id ? styles.downloading : ''}`}
               onClick={() => handleDownload(lightboxImg)}
               title="Tải xuống"
+              disabled={downloadingId === lightboxImg.id}
             >
-              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-              <span className={styles.lightboxActionLabel}>Tải về</span>
+              {downloadingId === lightboxImg.id ? (
+                <span className={styles.spinnerLarge} />
+              ) : (
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              )}
+              <span className={styles.lightboxActionLabel}>
+                {downloadingId === lightboxImg.id ? 'Đang tải...' : 'Tải về'}
+              </span>
             </button>
 
             {/* Bình luận */}
