@@ -307,10 +307,30 @@ export default function AdminDashboard() {
               </div>
 
               <div className={styles.formGroup}>
-                <label>Tags</label>
+                <label>Phân loại Concept / Tags</label>
                 <div className={styles.inputWithIcon}>
-                  <input type="text" name="tags" placeholder="Nhập tag" value={formData.tags} onChange={handleInputChange} />
+                  <input type="text" name="tags" placeholder="Chọn hoặc nhập tag concept (ví dụ: Cho Bé, Gia đình...)" value={formData.tags} onChange={handleInputChange} />
                   <div className={styles.iconBtn}>+</div>
+                </div>
+                <div style={{display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.5rem'}}>
+                  {['Cho Bé', 'Gia đình', 'Sơ sinh', 'Bầu', 'Beauty', 'Couple', 'Profile'].map(cat => (
+                    <button
+                      type="button"
+                      key={cat}
+                      onClick={() => setFormData(prev => ({ ...prev, tags: cat }))}
+                      style={{
+                        padding: '4px 10px',
+                        fontSize: '0.8rem',
+                        borderRadius: '15px',
+                        border: '1px solid var(--border)',
+                        background: formData.tags === cat ? 'var(--primary)' : 'var(--background)',
+                        color: formData.tags === cat ? 'white' : 'var(--text-muted)',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {cat}
+                    </button>
+                  ))}
                 </div>
               </div>
 

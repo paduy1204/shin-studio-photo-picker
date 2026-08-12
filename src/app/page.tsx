@@ -20,8 +20,8 @@ export default function Home() {
         <Link href="/admin">
           <button className={styles.btnPrimary}>Quản trị Album</button>
         </Link>
-        <Link href="/album/demo">
-          <button className={styles.btnSecondary}>Xem Album Mẫu</button>
+        <Link href="/concepts">
+          <button className={styles.btnSecondary}>Album Concept Mẫu</button>
         </Link>
       </div>
 
