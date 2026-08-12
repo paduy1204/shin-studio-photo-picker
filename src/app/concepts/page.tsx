@@ -1,74 +1,111 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect, useCallback } from 'react';
+import Masonry from 'react-masonry-css';
 import { supabase } from '@/lib/supabaseClient';
 import styles from './page.module.css';
 
-const CATEGORIES = ['Tất cả', 'Cho Bé', 'Gia đình', 'Sơ sinh', 'Bầu', 'Beauty', 'Couple', 'Profile'];
-
 export default function ConceptsPage() {
-  const [activeCategory, setActiveCategory] = useState('Tất cả');
-  const [albums, setAlbums] = useState<any[]>([]);
+  const [images, setImages] = useState<any[]>([]);
+  const [availableTags, setAvailableTags] = useState<string[]>(['Tất cả']);
+  const [activeCategoryTag, setActiveCategoryTag] = useState<string>('Tất cả');
+  const [lightboxImg, setLightboxImg] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [albumTitle, setAlbumTitle] = useState('MẪU CONCEPT SHIN STUDIO');
 
   useEffect(() => {
-    fetchConceptAlbums();
+    fetchMasterConceptPhotos();
   }, []);
 
-  const fetchConceptAlbums = async () => {
+  const fetchMasterConceptPhotos = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+
+      // Tìm album có gán Tag hoặc tên chứa "Concept"
+      const { data: albums } = await supabase
         .from('albums')
-        .select('*, images(id)')
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (!albums || albums.length === 0) {
+        setLoading(false);
+        return;
+      }
 
-      // Chỉ hiển thị các Album được Admin gán Tag Concept Mẫu (bỏ qua album khách hàng thông thường)
-      const conceptAlbumsOnly = (data || []).filter(album => album.tags && album.tags.trim() !== '');
+      // Ưu tiên album có tags hoặc tên chứa "Concept" / "Mẫu"
+      const conceptAlbum = albums.find(a => 
+        (a.tags && a.tags.trim() !== '') || 
+        a.name?.toLowerCase().includes('concept') || 
+        a.name?.toLowerCase().includes('mẫu')
+      ) || albums[0];
 
-      if (conceptAlbumsOnly.length > 0) {
-        const formatted = conceptAlbumsOnly.map((album) => {
-          let cover = album.cover_image_url;
-          if (!cover || cover.includes('drive-storage') || cover.includes('lh3.googleusercontent.com')) {
-            if (album.images && album.images.length > 0) {
-              cover = `https://drive.google.com/thumbnail?id=${album.images[0].id}&sz=w800`;
-            } else {
-              cover = 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=800&q=80';
-            }
+      if (conceptAlbum) {
+        setAlbumTitle(conceptAlbum.name);
+        const { data: files } = await supabase
+          .from('images')
+          .select('*')
+          .eq('album_id', conceptAlbum.id)
+          .order('name', { ascending: true });
+
+        if (files && files.length > 0) {
+          const formatted = files.map(f => ({
+            id: f.id,
+            url: `/api/proxy-image?id=${f.id}`,
+            driveFileId: f.drive_file_id || null,
+            webContentLink: f.web_content_link || null,
+            name: f.name,
+            tag: f.tag || '',
+          }));
+          setImages(formatted);
+
+          // Trích xuất các tag/thư mục con độc nhất (như BEAUTY, BẦU, COUPLE, PROFILE, CHO BÉ...)
+          const extractedTags = Array.from(
+            new Set(formatted.map(img => img.tag).filter(t => t && t.trim() !== ''))
+          );
+
+          if (extractedTags.length > 0) {
+            setAvailableTags(['Tất cả', ...extractedTags]);
+          } else {
+            // Mặc định các danh mục phổ biến nếu chưa phân loại trong Drive
+            setAvailableTags(['Tất cả', 'Cho Bé', 'Gia đình', 'Sơ sinh', 'Bầu', 'Beauty', 'Couple', 'Profile']);
           }
-
-          const categoryTag = album.tags.trim();
-
-          return {
-            ...album,
-            cover,
-            categoryTag,
-            photoCount: album.images?.length || 0,
-          };
-        });
-        setAlbums(formatted);
-      } else {
-        setAlbums([]);
+        }
       }
     } catch (err) {
-      console.error('Error fetching concept albums:', err);
+      console.error('Error fetching concept photos:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Lọc album theo Tab được chọn
-  const filteredAlbums = albums.filter((album) => {
-    if (activeCategory === 'Tất cả') return true;
+  // Lọc ảnh trực tiếp hiển thị ra lưới theo Tab được bấm
+  const displayImages = images.filter((img) => {
+    if (activeCategoryTag === 'Tất cả') return true;
+    const tagLower = activeCategoryTag.toLowerCase();
     return (
-      album.categoryTag?.toLowerCase().includes(activeCategory.toLowerCase()) ||
-      album.tags?.toLowerCase().includes(activeCategory.toLowerCase()) ||
-      album.name?.toLowerCase().includes(activeCategory.toLowerCase())
+      (img.tag && img.tag.toLowerCase().includes(tagLower)) ||
+      (img.name && img.name.toLowerCase().includes(tagLower))
     );
   });
+
+  const openLightbox = (img: any) => setLightboxImg(img);
+  const closeLightbox = () => setLightboxImg(null);
+
+  const currentIdx = lightboxImg ? displayImages.findIndex(img => img.id === lightboxImg.id) : -1;
+
+  const handleNext = useCallback((e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (currentIdx > -1 && currentIdx < displayImages.length - 1) {
+      setLightboxImg(displayImages[currentIdx + 1]);
+    }
+  }, [currentIdx, displayImages]);
+
+  const handlePrev = useCallback((e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (currentIdx > 0) {
+      setLightboxImg(displayImages[currentIdx - 1]);
+    }
+  }, [currentIdx, displayImages]);
 
   return (
     <div className={styles.container}>
@@ -78,70 +115,65 @@ export default function ConceptsPage() {
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/></svg>
           <span>Shin Studio</span>
         </div>
-        <h1 className={styles.title}>ALBUM CONCEPT MẪU</h1>
+        <h1 className={styles.title}>{albumTitle}</h1>
         <p className={styles.subtitle}>
-          Khám phá bộ sưu tập mẫu Concept chụp ảnh độc đáo tại Shin Studio.<br/>
-          Lựa chọn bối cảnh & phong cách chụp ưng ý nhất cho bộ ảnh của bạn!
+          Khám phá & lựa chọn mẫu Concept chụp ảnh yêu thích của bạn
         </p>
       </header>
 
-      {/* Category Tabs */}
+      {/* Category Tabs Bar (Shotpik Style) */}
       <div className={styles.tabsWrapper}>
         <div className={styles.tabsList}>
-          {CATEGORIES.map((cat) => {
-            const count = cat === 'Tất cả' 
-              ? albums.length 
-              : albums.filter(a => 
-                  a.categoryTag?.toLowerCase().includes(cat.toLowerCase()) ||
-                  a.tags?.toLowerCase().includes(cat.toLowerCase()) ||
-                  a.name?.toLowerCase().includes(cat.toLowerCase())
-                ).length;
-
-            return (
-              <button
-                key={cat}
-                className={`${styles.tabItem} ${activeCategory === cat ? styles.active : ''}`}
-                onClick={() => setActiveCategory(cat)}
-              >
-                <span>{cat}</span>
-                <span className={styles.tabCount}>{count}</span>
-              </button>
-            );
-          })}
+          {availableTags.map((tag) => (
+            <button
+              key={tag}
+              className={`${styles.tabItem} ${activeCategoryTag === tag ? styles.active : ''}`}
+              onClick={() => setActiveCategoryTag(tag)}
+            >
+              <span>{tag}</span>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Album Grid */}
+      {/* Full Photo Grid (Masonry) - Hiển thị trực tiếp full ảnh giống Shotpik */}
       {loading ? (
-        <div className={styles.emptyState}>Đang tải danh sách Concept...</div>
-      ) : filteredAlbums.length === 0 ? (
+        <div className={styles.emptyState}>Đang tải hình ảnh Concept...</div>
+      ) : displayImages.length === 0 ? (
         <div className={styles.emptyState}>
-          Chưa có album nào thuộc phân loại <strong>"{activeCategory}"</strong>.<br/>
-          Admin có thể chọn tag <strong>{activeCategory}</strong> khi tạo Album trong trang Quản trị!
+          Chưa có hình ảnh mẫu nào thuộc mục <strong>"{activeCategoryTag}"</strong>.<br/>
+          Admin chỉ cần tạo Folder trên Google Drive chứa các thư mục con <em>({availableTags.filter(t => t !== 'Tất cả').join(', ')})</em> để tự động cập nhật ảnh vào đây!
         </div>
       ) : (
-        <div className={styles.grid}>
-          {filteredAlbums.map((album) => (
-            <Link href={`/album/${album.id}`} key={album.id} className={styles.card}>
-              <div className={styles.imageWrapper}>
-                <img src={album.cover} alt={album.name} className={styles.coverImage} loading="lazy" />
-                <div className={styles.cardOverlay} />
-                <span className={styles.categoryTag}>{album.categoryTag}</span>
-                <span className={styles.photoCountBadge}>
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                  {album.photoCount} ảnh
-                </span>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          <Masonry
+            breakpointCols={{ default: 4, 1100: 3, 768: 2, 500: 2 }}
+            className={styles.myMasonryGrid}
+            columnClassName={styles.myMasonryGridColumn}
+          >
+            {displayImages.map((img) => (
+              <div key={img.id} className={styles.masonryItem} onClick={() => openLightbox(img)}>
+                <img src={img.url} alt={img.name} loading="lazy" style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '4px' }} />
+                <div className={styles.imageOverlay} />
               </div>
-              <div className={styles.cardBody}>
-                <h3 className={styles.albumTitle}>{album.name}</h3>
-                {album.client && <p className={styles.clientMeta}>Concept: {album.client}</p>}
-                <div className={styles.viewBtn}>
-                  <span>Xem mẫu cảnh này</span>
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                </div>
-              </div>
-            </Link>
-          ))}
+            ))}
+          </Masonry>
+        </div>
+      )}
+
+      {/* Lightbox Zoom Viewer */}
+      {lightboxImg && (
+        <div className={styles.lightbox} onClick={closeLightbox}>
+          <button className={styles.closeBtn} onClick={closeLightbox}>✕</button>
+          {currentIdx > 0 && (
+            <button className={styles.navBtnLeft} onClick={handlePrev}>❮</button>
+          )}
+          {currentIdx < displayImages.length - 1 && (
+            <button className={styles.navBtnRight} onClick={handleNext}>❯</button>
+          )}
+          <div className={styles.lightboxContent} onClick={e => e.stopPropagation()}>
+            <img src={lightboxImg.url} alt={lightboxImg.name} />
+          </div>
         </div>
       )}
     </div>

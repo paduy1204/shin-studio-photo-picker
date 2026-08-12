@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from 'next';
 import { google } from 'googleapis';
 
 export async function POST(request: Request) {
@@ -21,43 +21,80 @@ export async function POST(request: Request) {
       auth: apiKey
     });
 
-    // Truy vấn tất cả file trong thư mục đó
-    // Lưu ý: Thư mục phải ở chế độ Public (Anyone with the link can view)
-    const response = await drive.files.list({
+    const allFiles: any[] = [];
+
+    // 1. Quét các ảnh nằm trực tiếp trong thư mục gốc
+    const directImagesRes = await drive.files.list({
       q: `'${folderId}' in parents and mimeType contains 'image/' and trashed = false`,
       fields: 'files(id, name, mimeType, thumbnailLink, webContentLink, webViewLink)',
       pageSize: 1000,
       orderBy: 'name',
     });
 
-    const files = response.data.files;
+    if (directImagesRes.data.files) {
+      for (const file of directImagesRes.data.files) {
+        // Thử trích xuất tag từ tên file nếu có dạng [BEAUTY] 01.jpg hoặc BEAUTY_01.jpg
+        let tag = '';
+        const match = file.name.match(/^\[(.*?)\]/) || file.name.match(/^([a-zA-Z0-9À-ỹ\s]+)[_-]/);
+        if (match && match[1]) {
+          tag = match[1].trim();
+        }
 
-    if (!files || files.length === 0) {
-      return NextResponse.json({ 
-        error: 'Không tìm thấy hình ảnh nào trong thư mục này. Vui lòng kiểm tra lại Link hoặc quyền Chia sẻ (Share) của thư mục.' 
-      }, { status: 404 });
+        allFiles.push({
+          id: file.id,
+          name: file.name,
+          tag: tag,
+          thumbnailLink: file.thumbnailLink ? file.thumbnailLink.replace(/=s\d+/, '=s1000') : '',
+          webContentLink: file.webContentLink,
+          webViewLink: file.webViewLink
+        });
+      }
     }
 
-    // Xử lý link ảnh để lấy ảnh chất lượng cao làm thumbnail (thumbnailLink mặc định khá mờ)
-    // Hoặc dùng webContentLink để làm ảnh gốc.
-    const formattedFiles = files.map(file => {
-      // thumbnailLink thường có dạng =s220, đổi thành =s1000 để nét hơn
-      const highResThumbnail = file.thumbnailLink ? file.thumbnailLink.replace(/=s\d+/, '=s1000') : '';
-      
-      return {
-        id: file.id,
-        name: file.name,
-        thumbnailLink: highResThumbnail,
-        webContentLink: file.webContentLink,
-        webViewLink: file.webViewLink
-      };
+    // 2. Quét tất cả thư mục con (Subfolders như BEAUTY, BẦU, COUPLE, PROFILE, CHO BÉ...)
+    const subfoldersRes = await drive.files.list({
+      q: `'${folderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+      fields: 'files(id, name)',
+      pageSize: 100,
     });
+
+    if (subfoldersRes.data.files && subfoldersRes.data.files.length > 0) {
+      for (const subfolder of subfoldersRes.data.files) {
+        const subfolderName = subfolder.name.trim();
+
+        const subfolderImagesRes = await drive.files.list({
+          q: `'${subfolder.id}' in parents and mimeType contains 'image/' and trashed = false`,
+          fields: 'files(id, name, mimeType, thumbnailLink, webContentLink, webViewLink)',
+          pageSize: 1000,
+          orderBy: 'name',
+        });
+
+        if (subfolderImagesRes.data.files) {
+          for (const file of subfolderImagesRes.data.files) {
+            allFiles.push({
+              id: file.id,
+              name: file.name,
+              tag: subfolderName, // Gán tag bằng tên thư mục con (ví dụ: BEAUTY, BẦU, COUPLE...)
+              thumbnailLink: file.thumbnailLink ? file.thumbnailLink.replace(/=s\d+/, '=s1000') : '',
+              webContentLink: file.webContentLink,
+              webViewLink: file.webViewLink
+            });
+          }
+        }
+      }
+    }
+
+    if (allFiles.length === 0) {
+      return NextResponse.json({ 
+        error: 'Không tìm thấy hình ảnh nào trong thư mục này (kể cả thư mục con). Vui lòng kiểm tra lại Link hoặc quyền Chia sẻ (Share) của thư mục.' 
+      }, { status: 404 });
+    }
 
     return NextResponse.json({ 
       success: true, 
       folderId,
-      total: formattedFiles.length,
-      files: formattedFiles 
+      total: allFiles.length,
+      files: allFiles 
     });
 
   } catch (error: any) {

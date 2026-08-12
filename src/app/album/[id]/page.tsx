@@ -35,6 +35,7 @@ export default function AlbumClientView() {
   const [filterMode, setFilterMode] = useState<'all' | 'selected'>('all');
   const [showAppBrowserWarning, setShowAppBrowserWarning] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [activeCategoryTag, setActiveCategoryTag] = useState<string>('Tất cả');
 
   useEffect(() => {
     const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
@@ -59,6 +60,7 @@ export default function AlbumClientView() {
           driveFileId: f.drive_file_id || null,
           webContentLink: f.web_content_link || null,
           name: f.name,
+          tag: f.tag || '',
           liked: f.liked || false,
           comment: f.comment || '',
         }));
@@ -144,8 +146,18 @@ export default function AlbumClientView() {
   const openLightbox = (img: any) => setLightboxImg(img);
   const closeLightbox = () => setLightboxImg(null);
 
+  // Trích xuất tất cả các Tag / Thư mục con độc nhất từ danh sách ảnh trong album
+  const rawTags = Array.from(new Set(images.map(img => img.tag).filter(t => t && t.trim() !== '')));
+  const availableTags = rawTags.length > 0 ? ['Tất cả', ...rawTags] : [];
+
   const selectedCount = images.filter(img => img.liked).length;
-  const displayImages = filterMode === 'all' ? images : images.filter(img => img.liked);
+  const displayImages = images.filter(img => {
+    const matchesHeartFilter = filterMode === 'all' || img.liked;
+    const matchesTagFilter = activeCategoryTag === 'Tất cả' || 
+      (img.tag && img.tag.toLowerCase().includes(activeCategoryTag.toLowerCase())) ||
+      (img.name && img.name.toLowerCase().includes(activeCategoryTag.toLowerCase()));
+    return matchesHeartFilter && matchesTagFilter;
+  });
 
   const currentIdx = lightboxImg ? displayImages.findIndex(img => img.id === lightboxImg.id) : -1;
 
@@ -269,6 +281,21 @@ export default function AlbumClientView() {
             Tải toàn bộ Album
           </button>
         </div>
+
+        {/* Thanh Lọc Concept / Sub-Category dạng Shotpik */}
+        {availableTags.length > 1 && (
+          <div className={styles.conceptTagFilterBar}>
+            {availableTags.map(tag => (
+              <button
+                key={tag}
+                className={`${styles.conceptTagBtn} ${activeCategoryTag === tag ? styles.activeConceptTagBtn : ''}`}
+                onClick={() => setActiveCategoryTag(tag)}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        )}
       </header>
 
       {/* Lưới Ảnh - dùng react-masonry-css để sắp xếp từ trái qua phải */}

@@ -77,6 +77,44 @@
   box-shadow: var(--shadow-md);
 }
 
+/* ====== CONCEPT SUB-CATEGORY FILTER BAR (SHOTPIK STYLE) ====== */
+.conceptTagFilterBar {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.2rem 0 0.5rem;
+  padding: 0.4rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.conceptTagBtn {
+  padding: 6px 18px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted, #a1a1aa);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.conceptTagBtn:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.activeConceptTagBtn {
+  background: var(--primary, #e85d75) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(232, 93, 117, 0.3);
+}
+
 /* ====== MASONRY GRID ====== */
 .myMasonryGrid {
   display: flex;

@@ -175,6 +175,7 @@ export default function AdminDashboard() {
           id: file.id,
           album_id: newAlbumId,
           name: file.name,
+          tag: file.tag || '',
           url: file.webContentLink || '', // fallback
           thumbnail_link: file.thumbnailLink,
           web_content_link: file.webContentLink
