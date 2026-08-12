@@ -1,8 +1,10 @@
 import { Metadata } from 'next';
 import { supabase } from '@/lib/supabaseClient';
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const albumId = params?.id;
+export async function generateMetadata({ params }: { params: { id: string } | Promise<{ id: string }> }): Promise<Metadata> {
+  const resolvedParams = await Promise.resolve(params);
+  const albumId = resolvedParams?.id;
+
   if (!albumId) {
     return {
       title: 'Shin Studio | Photo Picker',
@@ -12,17 +14,22 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
   try {
     // 1. Lấy thông tin Album
-    const { data: album } = await supabase
+    const { data: album, error: albumError } = await supabase
       .from('albums')
       .select('name, client, cover_image_url')
       .eq('id', albumId)
       .maybeSingle();
 
-    const title = album?.name ? album.name : 'Album ảnh Shin Studio';
+    if (albumError) {
+      console.error('Supabase album query error:', albumError);
+    }
+
+    const albumName = album?.name || 'Album ảnh';
     const clientName = album?.client || '';
+    const title = albumName;
     const description = clientName
-      ? `${clientName} | Bộ ảnh chất lượng cao tại Shin Studio`
-      : 'Bộ ảnh chất lượng cao tại Shin Studio. Xem và chọn ảnh yêu thích.';
+      ? `${clientName} - ${albumName} tại Shin Studio`
+      : `${albumName} tại Shin Studio. Xem và chọn ảnh yêu thích.`;
 
     // 2. Xác định Cover URL
     let coverUrl: string | null = album?.cover_image_url || null;
@@ -77,7 +84,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       },
     };
   } catch (err) {
-    console.error('generateMetadata error:', err);
+    console.error('generateMetadata exception:', err);
     return {
       title: 'Shin Studio | Photo Picker',
       description: 'Hệ thống chọn ảnh chất lượng cao dành cho khách hàng của Shin Studio.',
