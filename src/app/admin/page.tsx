@@ -70,6 +70,10 @@ export default function AdminDashboard() {
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConceptModalOpen, setIsConceptModalOpen] = useState(false);
+  const [conceptDriveLink, setConceptDriveLink] = useState('');
+  const [isSyncingConcept, setIsSyncingConcept] = useState(false);
+
   const [formData, setFormData] = useState({
     driveLink: '',
     name: '',
@@ -97,6 +101,83 @@ export default function AdminDashboard() {
 
   const handleToggle = (key: keyof typeof toggles) => {
     setToggles(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleConceptSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!conceptDriveLink) {
+      alert("Vui lòng nhập Link Google Drive chứa các mẫu Concept!");
+      return;
+    }
+
+    const match = conceptDriveLink.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+    const folderId = match ? match[1] : null;
+
+    if (!folderId) {
+      alert('Link Google Drive không đúng định dạng. Cần link thư mục (chứa /folders/)');
+      return;
+    }
+
+    setIsSyncingConcept(true);
+    try {
+      const response = await fetch('/api/drive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folderId }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error);
+
+      const conceptAlbumId = 'master-concept';
+
+      // Tạo/Cập nhật Album Master Concept
+      const { error: albumError } = await supabase.from('albums').upsert({
+        id: conceptAlbumId,
+        name: 'MẪU CONCEPT SHIN STUDIO',
+        client: 'Shin Studio Concept Showcase',
+        slug: 'concepts',
+        tags: 'Concept Mẫu',
+        allow_comments: true,
+        watermark: false,
+        show_name_card: true,
+        password_protect: false,
+        allow_download: false,
+        limit_selection: false
+      });
+
+      if (albumError) console.error('Album Upsert Error:', albumError);
+
+      if (data.files && data.files.length > 0) {
+        // Xóa các ảnh cũ của Master Concept để cập nhật bộ ảnh mới nhất
+        await supabase.from('images').delete().eq('album_id', conceptAlbumId);
+
+        const imageInserts = data.files.map((file: any) => ({
+          id: file.id,
+          album_id: conceptAlbumId,
+          name: file.name,
+          tag: file.tag || '',
+          url: file.webContentLink || '',
+          thumbnail_link: file.thumbnailLink,
+          web_content_link: file.webContentLink
+        }));
+
+        const chunkSize = 500;
+        for (let i = 0; i < imageInserts.length; i += chunkSize) {
+          const chunk = imageInserts.slice(i, i + chunkSize);
+          await supabase.from('images').upsert(chunk);
+        }
+      }
+
+      alert(`Đồng bộ thành công ${data.files.length} ảnh Concept Mẫu! Khách mở Master Link sẽ xem được ngay.`);
+      setIsConceptModalOpen(false);
+      setConceptDriveLink('');
+      fetchAlbums();
+    } catch (err: any) {
+      alert('Lỗi: ' + err.message);
+    } finally {
+      setIsSyncingConcept(false);
+    }
   };
 
   const handleDeleteAlbum = async (e: React.MouseEvent, id: string, name: string) => {
@@ -241,11 +322,24 @@ export default function AdminDashboard() {
 
       <main className={styles.mainContent}>
         <div className={styles.albumGrid}>
-          {/* Create Button */}
+          {/* Button 1: Cài đặt Album Concept Mẫu */}
+          <div 
+            className={styles.createCard} 
+            onClick={() => setIsConceptModalOpen(true)}
+            style={{ borderColor: 'var(--primary)', background: 'rgba(232, 93, 117, 0.06)' }}
+          >
+            <div className={styles.createContent} style={{ color: 'var(--primary)' }}>
+              <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12l3 3 5-5"/></svg>
+              <span style={{ fontWeight: 700 }}>Cài đặt Concept Mẫu</span>
+              <small style={{ fontSize: '0.75rem', opacity: 0.8, marginTop: '2px' }}>Dán Link Drive chứa các Concept</small>
+            </div>
+          </div>
+
+          {/* Button 2: Tạo Album Khách Hàng */}
           <div className={styles.createCard} onClick={() => setIsModalOpen(true)}>
             <div className={styles.createContent}>
               <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" strokeWidth="2" fill="none"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              <span>Tạo album</span>
+              <span>Tạo album Khách</span>
             </div>
           </div>
 
@@ -401,6 +495,46 @@ export default function AdminDashboard() {
                 <button type="button" className={styles.btnCancel} onClick={() => setIsModalOpen(false)}>Hủy bỏ</button>
                 <button type="submit" className={styles.btnSubmit} disabled={isScanning}>
                   {isScanning ? 'Đang tải...' : 'Tạo ngay'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      {/* Modal Cài đặt Concept Mẫu */}
+      {isConceptModalOpen && (
+        <div className={styles.modalOverlay} onClick={() => setIsConceptModalOpen(false)}>
+          <div className={styles.modalContainer} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2>Cài đặt Album Concept Mẫu</h2>
+              <button className={styles.closeBtn} onClick={() => setIsConceptModalOpen(false)}>✕</button>
+            </div>
+            
+            <form onSubmit={handleConceptSubmit} className={styles.modalBody}>
+              <div className={styles.formGroup}>
+                <label>Link Google Drive chứa ảnh Concept Mẫu <span style={{color: 'red'}}>*</span></label>
+                <div className={styles.inputWithIcon}>
+                  <input 
+                    type="text" 
+                    placeholder="Dán Link Google Drive thư mục lớn chứa các thư mục con Concept" 
+                    value={conceptDriveLink} 
+                    onChange={e => setConceptDriveLink(e.target.value)} 
+                    required 
+                  />
+                  <div className={styles.iconBtn}>+</div>
+                </div>
+              </div>
+
+              <div className={styles.noteBox} style={{ background: 'rgba(232, 93, 117, 0.1)', borderColor: 'rgba(232, 93, 117, 0.3)' }}>
+                <strong>📌 Hướng dẫn tổ chức thư mục trên Google Drive:</strong><br/>
+                - Trên Google Drive, bạn tạo 1 thư mục lớn (ví dụ: <code>MẪU CONCEPT SHIN STUDIO</code>).<br/>
+                - Bên trong thư mục lớn đó, tạo các thư mục con đặt tên là: <code>BEAUTY</code>, <code>BẦU</code>, <code>COUPLE</code>, <code>PROFILE</code>, <code>CHO BÉ</code>, <code>SƠ SINH</code>... và thả ảnh vào đúng các thư mục này.<br/>
+                - Dán link thư mục lớn vào ô trên ➔ Hệ thống sẽ tự động quét & tạo các Tab phân loại tương ứng cho khách xem!
+              </div>
+
+              <div className={styles.modalFooter}>
+                <button type="button" className={styles.btnCancel} onClick={() => setIsConceptModalOpen(false)}>Hủy bỏ</button>
+                <button type="submit" className={styles.btnSubmit} disabled={isSyncingConcept}>
+                  {isSyncingConcept ? 'Đang đồng bộ ảnh...' : 'Đồng bộ ngay'}
                 </button>
               </div>
             </form>
