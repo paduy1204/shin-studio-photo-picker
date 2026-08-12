@@ -47,10 +47,14 @@ export default function AdminDashboard() {
     const formattedAlbums = data.map(album => {
       const hearts = album.images?.filter((img: any) => img.liked).length || 0;
       const comments = album.images?.filter((img: any) => img.comment && img.comment.trim() !== '').length || 0;
-      let cover = 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=800&q=80';
-      if (album.images && album.images.length > 0) {
-        const firstImage = album.images[0];
-        cover = firstImage.thumbnail_link || firstImage.web_content_link || `/api/proxy-image?id=${firstImage.id}`;
+      let cover = album.cover_image_url;
+      if (!cover || cover.includes('drive-storage') || cover.includes('lh3.googleusercontent.com')) {
+        if (album.images && album.images.length > 0) {
+          const firstImage = album.images[0];
+          cover = `https://drive.google.com/thumbnail?id=${firstImage.id}&sz=w800`;
+        } else {
+          cover = 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=800&q=80';
+        }
       }
       
       return {
