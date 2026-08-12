@@ -1,33 +1,28 @@
+/* ====== HEADER ====== */
 .albumHeader {
-  padding: 3rem 2rem 1rem;
+  padding: 2.5rem 1.5rem 1rem;
   text-align: center;
-  animation: fade-in-down 0.8s ease-out;
+  animation: fade-in-down 0.6s ease-out;
 }
 
 .albumTitle {
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: 700;
   color: var(--primary);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .albumMeta {
   color: var(--text-muted);
-  font-size: 1rem;
+  font-size: 0.9rem;
+  margin-bottom: 1.2rem;
 }
 
 .statsBar {
   display: flex;
   justify-content: center;
-  gap: 2rem;
-  margin-top: 1rem;
-  padding: 1rem;
-  background-color: var(--card-bg);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  max-width: 400px;
-  margin-left: auto;
-  margin-right: auto;
+  gap: 0.5rem;
+  margin-bottom: 1.2rem;
 }
 
 .statItem {
@@ -35,34 +30,31 @@
   align-items: center;
   gap: 0.5rem;
   font-weight: 600;
+  font-size: 0.9rem;
   color: var(--text-muted);
   padding: 0.5rem 1rem;
   border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
   transition: all 0.2s ease;
   cursor: pointer;
 }
 
 .statItem:hover {
-  background-color: rgba(0, 0, 0, 0.03);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .statItem.activeTab {
   background-color: var(--primary);
+  border-color: var(--primary);
   color: white;
-}
-
-.statItem.activeTab svg {
-  color: white;
-}
-
-.statItem svg {
-  color: var(--text-muted);
 }
 
 .headerActions {
   display: flex;
   justify-content: center;
-  margin-top: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .downloadAllBtn {
@@ -71,10 +63,10 @@
   gap: 0.5rem;
   background-color: var(--primary);
   color: white;
-  padding: 10px 24px;
+  padding: 10px 22px;
   border-radius: var(--radius-md);
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.95rem;
   transition: all 0.3s ease;
   box-shadow: var(--shadow-sm);
 }
@@ -85,72 +77,59 @@
   box-shadow: var(--shadow-md);
 }
 
-.masonryGrid {
-  column-count: 3;
-  column-gap: 1.5rem;
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
+/* ====== MASONRY GRID ====== */
+.myMasonryGrid {
+  display: flex;
+  margin-left: -6px;
+  padding: 0 6px 2rem;
 }
 
-@media (max-width: 1024px) {
-  .masonryGrid { column-count: 2; }
+.myMasonryGridColumn {
+  padding-left: 6px;
+  background-clip: padding-box;
 }
 
-@media (max-width: 640px) {
-  .masonryGrid { 
-    column-count: 3; 
-    column-gap: 4px;
-    padding: 4px; 
-  }
-}
-
+/* ====== IMAGE ITEM ====== */
 .masonryItem {
-  break-inside: avoid;
-  margin-bottom: 1.5rem;
+  margin-bottom: 6px;
   position: relative;
-  border-radius: var(--radius-md);
+  border-radius: 4px;
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  background-color: var(--card-bg);
   cursor: pointer;
-  animation: fade-in-up 1s ease-out;
-}
-
-@media (max-width: 640px) {
-  .masonryItem {
-    margin-bottom: 4px;
-    border-radius: 4px;
-  }
+  display: block;
 }
 
 .masonryItem img {
   width: 100%;
+  height: auto;
   display: block;
-  transition: transform 0.4s ease;
+  transition: transform 0.3s ease;
 }
 
 .masonryItem:hover img {
   transform: scale(1.03);
 }
 
+/* Overlay - chỉ hiện khi hover */
 .imageOverlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 40%, transparent 70%, rgba(0,0,0,0.6) 100%);
+  background: linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, transparent 35%, transparent 65%, rgba(0,0,0,0.6) 100%);
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.25s ease;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 1rem;
+  padding: 6px;
+  pointer-events: none;
 }
 
 .masonryItem:hover .imageOverlay {
   opacity: 1;
+  pointer-events: all;
 }
 
 .topActions {
@@ -159,296 +138,194 @@
 }
 
 .heartBtn {
-  background-color: rgba(255, 255, 255, 0.9);
+  background: rgba(255,255,255,0.9);
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-muted);
+  color: #666;
   transition: all 0.2s ease;
-}
-
-.heartBtn:hover {
-  transform: scale(1.1);
+  border: none;
+  cursor: pointer;
 }
 
 .heartBtn.active {
-  color: var(--heart);
-}
-
-.bottomInfo {
+  background: var(--heart);
   color: white;
-  font-size: 0.9rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.imageName {
-  font-weight: 500;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
 
 .bottomActions {
   display: flex;
-  gap: 0.8rem;
+  justify-content: flex-end;
+  gap: 4px;
 }
 
 .iconBtn {
-  color: white;
+  background: rgba(255,255,255,0.9);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.9rem;
+  color: #444;
   transition: all 0.2s ease;
-  background: rgba(0,0,0,0.3);
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  backdrop-filter: blur(5px);
+  border: none;
+  cursor: pointer;
 }
 
 .iconBtn:hover {
-  background: rgba(255,255,255,0.2);
-  transform: scale(1.1);
-  color: var(--primary);
+  background: var(--primary);
+  color: white;
 }
 
-/* Lightbox styles */
+/* ====== LIGHTBOX ====== */
 .lightbox {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.9);
+  background-color: rgba(0, 0, 0, 0.92);
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  animation: fade-in 0.3s ease;
+  animation: fade-in 0.2s ease;
 }
 
 .lightboxHeader {
   display: flex;
   justify-content: space-between;
-  padding: 1.5rem 2rem;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  flex-shrink: 0;
+}
+
+.lightboxFileName {
   color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  opacity: 0.9;
 }
 
 .closeBtn {
   color: white;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255,255,255,0.12);
   border-radius: 50%;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
 }
 
 .closeBtn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255,255,255,0.25);
 }
 
 .lightboxContent {
   flex: 1;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1rem 2rem 2rem;
   position: relative;
+  padding: 0 60px;
+  overflow: hidden;
 }
 
 .lightboxImageWrapper {
-  position: relative;
   max-width: 100%;
-  max-height: 85vh;
+  max-height: 100%;
   display: flex;
   justify-content: center;
+  align-items: center;
 }
 
 .lightboxImage {
   max-width: 100%;
-  max-height: calc(100vh - 120px);
+  max-height: calc(100vh - 180px);
   object-fit: contain;
-  border-radius: 8px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  border-radius: 6px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
 }
 
-.lightboxActions {
-  display: flex;
-  gap: 1.5rem;
-  margin-top: 1.5rem;
-  padding: 1rem 2rem;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 30px;
-  backdrop-filter: blur(10px);
-}
-
-.lightboxActions button {
-  color: white;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.lightboxActions button:hover {
-  transform: scale(1.05);
-}
-
-.lightboxHeart {
-  color: white;
-}
-
-.lightboxHeart.active {
-  color: var(--heart);
-}
-
-.lightboxSidebar {
-  position: absolute;
-  right: 0;
-  top: 0;
-  height: 100%;
-  width: 350px;
-  background-color: var(--background);
-  box-shadow: -5px 0 25px rgba(0,0,0,0.5);
-  display: flex;
-  flex-direction: column;
-  padding: 2rem;
-  transform: translateX(100%);
-  transition: transform 0.3s ease;
-}
-
-.lightboxSidebar.open {
-  transform: translateX(0);
-}
-
-@keyframes fade-in {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
-}
-@keyframes fade-in-down {
-  0% { opacity: 0; transform: translateY(-20px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
-/* Mobile Responsive */
-@media (max-width: 640px) {
-  .albumHeader {
-    padding: 2rem 1rem 1rem;
-  }
-  
-  .albumTitle {
-    font-size: 2rem;
-  }
-  
-  .statsBar {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .statItem {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .lightboxActions {
-    flex-direction: row;
-    justify-content: center;
-    gap: 1.5rem;
-    padding: 1rem;
-    border-radius: 30px;
-    width: auto;
-  }
-
-  .lightboxActions button {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .lightboxActions div {
-    width: 100% !important;
-    height: 1px;
-    margin: 0.2rem 0 !important;
-  }
-
-  .lightboxImage {
-    max-height: calc(100vh - 220px); /* Leave space for bottom actions on mobile */
-  }
-  
-  .imageOverlay {
-    padding: 0.25rem;
-  }
-  
-  .heartBtn {
-    width: 24px;
-    height: 24px;
-  }
-  
-  .heartBtn svg {
-    width: 14px;
-    height: 14px;
-  }
-  
-  .imageName {
-    display: none; /* Hide name on mobile to save space */
-  }
-  
-  .iconBtn {
-    width: 24px;
-    height: 24px;
-  }
-  
-  .iconBtn svg {
-    width: 12px;
-    height: 12px;
-  }
-  
-  .bottomActions {
-    gap: 0.2rem;
-  }
-}
-
-/* Nav arrows for lightbox */
+/* Nút điều hướng mũi tên */
 .lightboxNav {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.15);
   color: white;
   border-radius: 50%;
-  width: 50px;
-  height: 50px;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 10;
   transition: all 0.2s;
-  backdrop-filter: blur(5px);
+  border: none;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .lightboxNav:hover {
   background: rgba(255,255,255,0.3);
-  transform: translateY(-50%) scale(1.1);
 }
 
-.lightboxNav.left {
-  left: 20px;
+.navLeft {
+  left: 8px;
 }
 
-.lightboxNav.right {
-  right: 20px;
+.navRight {
+  right: 8px;
 }
 
+/* Thanh actions phía dưới lightbox - chỉ icon + label ngắn */
+.lightboxActions {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  padding: 1rem 1.5rem 1.5rem;
+  flex-shrink: 0;
+}
 
+.lightboxActionBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: rgba(255,255,255,0.85);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 56px;
+}
 
+.lightboxActionBtn:hover {
+  color: white;
+  transform: translateY(-2px);
+}
+
+.lightboxActionBtn.heartActive {
+  color: var(--heart);
+}
+
+.lightboxActionLabel {
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* Zalo warning overlay */
 .zaloWarning {
   position: fixed;
   top: 0;
@@ -472,66 +349,90 @@
 }
 
 .zaloWarning p {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   line-height: 1.6;
   margin-bottom: 2rem;
+  max-width: 360px;
 }
 
-.myMasonryGrid {
-  display: flex;
-  margin-left: -1.5rem; /* gutter size offset */
-  width: auto;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 2rem;
+/* ====== ANIMATIONS ====== */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
-.myMasonryGridColumn {
-  padding-left: 1.5rem; /* gutter size */
-  background-clip: padding-box;
+
+@keyframes fade-in-down {
+  from { opacity: 0; transform: translateY(-15px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-.masonryItem {
-  margin-bottom: 1.5rem;
-  position: relative;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  cursor: pointer;
-  animation: fade-in-up 0.5s ease-out;
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-.masonryItem img {
-  width: 100%;
-  height: auto;
-  display: block;
-  transition: transform 0.3s ease;
-}
-@media (max-width: 1024px) {
-  .myMasonryGrid { margin-left: -1rem; padding: 1rem; }
-  .myMasonryGridColumn { padding-left: 1rem; }
-  .masonryItem { margin-bottom: 1rem; }
-}
+
+/* ====== MOBILE ====== */
 @media (max-width: 640px) {
-  .myMasonryGrid { margin-left: -4px; padding: 4px; }
-  .myMasonryGridColumn { padding-left: 4px; }
-  .masonryItem { margin-bottom: 4px; border-radius: 4px; }
-}
+  .albumHeader {
+    padding: 1.5rem 1rem 0.5rem;
+  }
 
-.iconActionBtn {
-  background: transparent;
-  border: none;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.iconActionBtn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: scale(1.1);
-}
-.iconActionBtn.activeHeart {
-  color: var(--heart);
+  .albumTitle {
+    font-size: 1.5rem;
+  }
+
+  .statsBar {
+    gap: 0.4rem;
+  }
+
+  .statItem {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.82rem;
+  }
+
+  /* Grid: 3 cột sát nhau trên mobile */
+  .myMasonryGrid {
+    margin-left: -3px;
+    padding: 0 3px 1rem;
+  }
+
+  .myMasonryGridColumn {
+    padding-left: 3px;
+  }
+
+  .masonryItem {
+    margin-bottom: 3px;
+  }
+
+  /* Lightbox mobile */
+  .lightboxContent {
+    padding: 0 44px;
+  }
+
+  .lightboxImage {
+    max-height: calc(100vh - 160px);
+  }
+
+  .lightboxNav {
+    width: 36px;
+    height: 36px;
+  }
+
+  .navLeft {
+    left: 4px;
+  }
+
+  .navRight {
+    right: 4px;
+  }
+
+  .lightboxActions {
+    gap: 1.5rem;
+    padding: 0.8rem 1rem 1.2rem;
+  }
+
+  .lightboxActionBtn svg {
+    width: 24px;
+    height: 24px;
+  }
 }
