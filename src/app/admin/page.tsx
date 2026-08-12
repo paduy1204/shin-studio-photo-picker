@@ -33,7 +33,9 @@ export default function AdminDashboard() {
       return;
     }
     
-    if (!data || data.length === 0) {
+    const customerOnlyData = (data || []).filter((album: any) => album.id !== 'master-concept');
+    
+    if (customerOnlyData.length === 0) {
       // Migrate from localStorage if it exists and Supabase is empty
       const saved = localStorage.getItem('shinstudio_albums');
       if (saved) {
@@ -44,7 +46,7 @@ export default function AdminDashboard() {
       return;
     }
     
-    const formattedAlbums = data.map(album => {
+    const formattedAlbums = customerOnlyData.map(album => {
       const hearts = album.images?.filter((img: any) => img.liked).length || 0;
       const comments = album.images?.filter((img: any) => img.comment && img.comment.trim() !== '').length || 0;
       let cover = album.cover_image_url;
@@ -309,6 +311,21 @@ export default function AdminDashboard() {
           </div>
         </div>
         <div className={styles.navRight}>
+          <Link href="/admin/concepts" style={{
+            background: 'rgba(232, 93, 117, 0.15)',
+            color: 'var(--primary)',
+            padding: '8px 16px',
+            borderRadius: '20px',
+            textDecoration: 'none',
+            fontSize: '0.88rem',
+            fontWeight: 700,
+            border: '1px solid rgba(232, 93, 117, 0.3)',
+            display: 'inline-flex',
+            align-items: 'center',
+            gap: '0.4rem'
+          }}>
+            📸 Quản Lý Concept Mẫu Studio ➔
+          </Link>
           <div className={styles.searchBar}>
             <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             <input type="text" placeholder="Tìm kiếm album..." />
@@ -322,24 +339,11 @@ export default function AdminDashboard() {
 
       <main className={styles.mainContent}>
         <div className={styles.albumGrid}>
-          {/* Button 1: Cài đặt Album Concept Mẫu */}
-          <div 
-            className={styles.createCard} 
-            onClick={() => setIsConceptModalOpen(true)}
-            style={{ borderColor: 'var(--primary)', background: 'rgba(232, 93, 117, 0.06)' }}
-          >
-            <div className={styles.createContent} style={{ color: 'var(--primary)' }}>
-              <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12l3 3 5-5"/></svg>
-              <span style={{ fontWeight: 700 }}>Cài đặt Concept Mẫu</span>
-              <small style={{ fontSize: '0.75rem', opacity: 0.8, marginTop: '2px' }}>Dán Link Drive chứa các Concept</small>
-            </div>
-          </div>
-
-          {/* Button 2: Tạo Album Khách Hàng */}
+          {/* Button: Tạo Album Khách Hàng */}
           <div className={styles.createCard} onClick={() => setIsModalOpen(true)}>
             <div className={styles.createContent}>
               <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" strokeWidth="2" fill="none"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              <span>Tạo album Khách</span>
+              <span>Tạo album</span>
             </div>
           </div>
 
